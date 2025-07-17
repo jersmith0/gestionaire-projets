@@ -29,7 +29,7 @@ import { RouterLink } from '@angular/router';
           [class.green-badge]="project.uid === user?.uid"
         ></div>
               <mat-card-header>
-                  <mat-card-title>
+                  <mat-card-title style="color:lightgreen">
                       {{project.title}}
                   </mat-card-title>
                   <mat-card-subtitle>

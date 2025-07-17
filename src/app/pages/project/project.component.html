@@ -25,19 +25,26 @@
     <p>{{ project?.description }}</p>
 
     <p align="end" >
-        Ajouté le {{ formateDate(project?.createdAt) | date : "medium" }}
-        {{
+        <b>Ajoutée le</b> 
+        <span style="color: greenyellow">
+           {{ formateDate(project?.createdAt) | date : "medium" }} 
+
+        </span>
+        <span style="color: orange;">
+             {{
         project?.updatedAt! > project?.createdAt!
-        ? "- Modifié le " + (formateDate(project?.updatedAt) | date : "medium")
+        ? "- Modifiée le " + (formateDate(project?.updatedAt) | date : "medium")
         : ""
         }}
+        </span>
+       
     </p>
 
     <mat-divider />
     <br />
     <div class="columns-container">
         <mat-card appearance="outlined">
-                <mat-card-header>
+                <mat-card-header >
                         <mat-card-title style="
                             display: flex;
                             justify-content: space-between;
@@ -46,8 +53,8 @@
                             <button mat-flat-button (click)="onSetTodo(project?.id!)">
                                 Nouvelle tâche
                             </button></mat-card-title>
-                        <mat-card-subtitle>Décrivez les tâches selon le vue d'utilisateur/client/bénéficiaire :
-                            qui fait quoi et pourquoi</mat-card-subtitle>
+                        <mat-card-subtitle>Décrivez les tâches à faire de manière plus explicite :
+                            quoi faire  et comment .</mat-card-subtitle>
                     </mat-card-header>
             <br />
             <mat-divider />
@@ -69,11 +76,11 @@
             </mat-card>
 
             <mat-card appearance="outlined">
-                    <mat-card-header>
-                        <mat-card-title>En cours</mat-card-title>
-                        <mat-card-subtitle>La liste des tâches en cours d'execution</mat-card-subtitle>
+                    <mat-card-header style="background-color: #FFA500;color: #000000;height: 10vh;">
+                        <mat-card-title style="font-weight: 800;">En cours</mat-card-title>
+                        <mat-card-subtitle style="color: #000000;font-weight: 400;">La liste des tâches en cours d'execution</mat-card-subtitle>
                     </mat-card-header>
-                     <br />
+                     <!-- <br /> -->
             <mat-divider />
             <mat-card-content
                 cdkDropList 
@@ -93,11 +100,11 @@
             </mat-card>
 
             <mat-card appearance="outlined">
-            <mat-card-header>
-                <mat-card-title>Terminées</mat-card-title>
-                <mat-card-subtitle>La liste des tâches terminées</mat-card-subtitle>
+            <mat-card-header style="background-color: #32CD32;color: #000000;height:10vh;">
+                <mat-card-title style="font-weight: 800;">Terminées</mat-card-title>
+                <mat-card-subtitle style="color: #000000;font-weight: 400; ">La liste des tâches terminées</mat-card-subtitle>
             </mat-card-header>
-            <br />
+            <!-- <br /> -->
             <mat-divider />
             <mat-card-content 
                 cdkDropList

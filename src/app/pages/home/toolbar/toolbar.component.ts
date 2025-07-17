@@ -61,7 +61,7 @@ import { AsyncPipe } from '@angular/common';
 
       <mat-menu #themeMenu="matMenu">
         <button mat-menu-item (click)="swithTheme('device-theme')">
-          <mat-icon>computer</mat-icon>
+          <mat-icon>brightness_6</mat-icon>
           Appareil
         </button>
         <button mat-menu-item (click)="swithTheme('light-theme')">
