@@ -77,7 +77,7 @@ export class SetProjectComponent implements OnInit{
   }
 
   onSubmit(user:User | null){
-     if (this.projectForm.invalid) {
+    if (this.projectForm.invalid) {
       this.projectForm.markAllAsTouched();
       return;
     }
@@ -86,20 +86,40 @@ export class SetProjectComponent implements OnInit{
     const projectId = this.project
       ? this.project.id
       : this.fs.createDocId(projectCollection);
-    const project:Project<FieldValue> = {
+    const project: Project<FieldValue> = {
       id: projectId,
       uid: user?.uid!,
-       createdAt: this.project ? this.project.createdAt : serverTimestamp(),
+      createdAt: this.project ? this.project.createdAt : serverTimestamp(),
       updatedAt: serverTimestamp(),
-      ...this.projectForm.getRawValue()
-    }
+      ...this.projectForm.getRawValue(),
+    };
 
     this.fs.setProject(project);
 
-     const message = this.project
+    const message = this.project
       ? 'projet modifié avec succès'
       : 'projet crée avec succès';
-    this.snakBar.open(message,'',{duration:5000});
+    this.snakBar.open(message, '', { duration: 5000 });
+
+    // Création de notifications Firestore pour chaque contributeur (sauf le créateur)
+    if (!this.project) {
+      const contributorsRaw: string[] = this.projectForm.getRawValue().contributors || [];
+      const contributors = contributorsRaw
+        .map(email => (email || '').trim().toLowerCase())
+        .filter(email => email && email !== (user?.email || '').trim().toLowerCase());
+      contributors.forEach(email => {
+        const notif = {
+          id: this.fs.createDocId(this.fs.notificationCol),
+          to: email,
+          message: `Vous avez été ajouté comme contributeur au projet : ${project.title}`,
+          projectId: project.id,
+          createdAt: serverTimestamp(),
+          read: false
+        };
+        this.fs.setNotification(notif);
+      });
+    }
+
     this.dialog.closeAll();
   }
 }

@@ -1,7 +1,7 @@
+
 mat-toolbar {
   display: flex;
   justify-content: space-between;
-
   div {
     display: flex;
     align-items: center;
@@ -9,13 +9,30 @@ mat-toolbar {
   }
 }
 
+.project-main {
+  width: 100%;
+  max-width: 1200px;
+  margin: auto;
+  padding: 1rem 1.2rem;
+  box-sizing: border-box;
+}
+
 .columns-container {
   display: flex;
   flex-direction: row;
   gap: 1rem;
-
   & > mat-card {
     flex: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .project-main {
+    padding: 0.5rem 0.2rem;
+  }
+  .columns-container {
+    flex-direction: column;
+    gap: 0.7rem;
   }
 }
 

@@ -39,7 +39,7 @@ export default class ContributorsComponent {
       url: 'active',
     },
     {
-      name: 'Archives',
+      name: 'Mode focus',
       url: 'achived',
     },
   ];

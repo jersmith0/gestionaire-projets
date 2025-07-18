@@ -1,3 +1,4 @@
+import { Notification } from '../../models/notification.model';
 import { inject, Injectable } from '@angular/core';
 import { Project } from '../../models/project.model';
 import { FieldValue, collection ,doc, Firestore, addDoc, updateDoc, setDoc, query, collectionData, or, orderBy, where, Timestamp, docData, deleteDoc } from '@angular/fire/firestore';
@@ -9,7 +10,24 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class FirestoreService {
-  private fs = inject(Firestore)
+  // ...existing code...
+  getNotificationsForUser(email: string) {
+    const notifColRef = collection(this.fs, this.notificationCol);
+    const notifQuery = query(
+      notifColRef,
+      where('to', '==', email),
+      orderBy('createdAt', 'desc')
+    );
+    return collectionData(notifQuery);
+  }
+  private fs = inject(Firestore);
+  public notificationCol = "notifications";
+
+  public setNotification(notification: Notification) {
+    const notifColRef = collection(this.fs, this.notificationCol);
+    const notifDocRef = doc(notifColRef, notification.id);
+    return setDoc(notifDocRef, notification, { merge: true });
+  }
   createDocId = (colName: string) => doc(collection(this.fs, colName)).id;
   projectCol = "projects";
 
