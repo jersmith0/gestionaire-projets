@@ -99,9 +99,6 @@ import { AsyncPipe, CommonModule } from '@angular/common';
     </mat-toolbar>
         <mat-divider />
 
-
-    
-
   `,
   styles: `
   mat-toolbar{

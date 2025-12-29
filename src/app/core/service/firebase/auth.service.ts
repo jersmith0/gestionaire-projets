@@ -1,5 +1,14 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, authState, user, signInWithPopup, GoogleAuthProvider, signOut, sendSignInLinkToEmail, ActionCodeSettings, isSignInWithEmailLink, signInWithEmailLink } from '@angular/fire/auth';
+import { Auth, 
+    authState,
+    user,
+    signInWithPopup, 
+    GoogleAuthProvider, 
+    signOut, 
+    sendSignInLinkToEmail,
+    ActionCodeSettings, 
+    isSignInWithEmailLink, 
+    signInWithEmailLink } from '@angular/fire/auth';
 
 @Injectable({
   providedIn: 'root'

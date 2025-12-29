@@ -51,7 +51,7 @@ export default class ProjectComponent implements OnInit, OnDestroy{
   id = input('id');
   projectSub?: Subscription;
   project?: Project<Timestamp>;
-   readonly title = inject(Title);
+  readonly title = inject(Title);
   private fs = inject(FirestoreService);
   private auth = inject(AuthService);
   readonly user$ = this.auth.user;

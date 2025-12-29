@@ -1,3 +1,4 @@
+// src/app/components/app-achived.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,191 +8,243 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <main class="focus-mode">
-      <h2 style="color:#000;font-weight:800">Mode Focus 💆</h2>
-      <div class="timer-container">
-        <div class="timer-display">{{ minutes }}:{{ seconds }}</div>
-        <button (click)="toggleTimer()" [disabled]="isRunning" class="start-btn">Démarrer</button>
-        <button (click)="resetTimer()" [disabled]="!isRunning" style="padding:0.8rem;color:white">Réinitialiser</button>
-      </div>
-      <div class="points-badges">
-        <div class="points">Points : <b>{{ points }}</b></div>
-        <div class="badges">
-          <span *ngFor="let badge of badges" class="badge">🏅 {{ badge }}</span>
+    <main class="focus-app">
+      <div class="focus-card">
+        <h1 class="title">Mode Focus</h1>
+
+        <div class="time-input-container">
+          <label for="focusTime">Temps de concentration (minutes)</label>
+          <input 
+            id="focusTime"
+            type="number"
+            min="5"
+            max="90"
+            [(ngModel)]="focusMinutes"
+            class="time-input"
+            placeholder="25"
+            (input)="validateTime()" />
+          <span class="error" *ngIf="timeError">{{ timeError }}</span>
         </div>
-      </div>
-      <div class="quote" *ngIf="currentQuote">
-        <em>“{{ currentQuote }}”</em>
-      </div>
-      <div *ngIf="showRoulette" class="roulette-overlay">
-        <div class="roulette-modal">
-          <h3>🎡 Roulette de Pause Créative</h3>
-          <div class="roulette-wheel">
-            <div class="activity">{{ selectedActivity ? selectedActivity.label : 'Clique sur "Lancer la roulette" !' }}</div>
+
+        <div class="timer-display">
+          <span class="minutes">{{ minutes }}</span>
+          <span class="separator">:</span>
+          <span class="seconds">{{ seconds }}</span>
+        </div>
+
+        <div class="controls">
+          @if(!isRunning){
+            <button 
+            class="btn primary" 
+            (click)="toggleTimer()"
+            [disabled]="!canStart">
+            {{  'Démarrer' }}
+          </button>
+          }
+
+          <button 
+            class="btn secondary" 
+            (click)="resetTimer()"
+            [disabled]="!isRunning">
+            Réinitialiser
+          </button>
+        </div>
+
+        <div class="stats">
+          <div class="points">
+            <span class="label">Points</span>
+            <span class="value">{{ points }}</span>
           </div>
-          <button (click)="spinRoulette()" [disabled]="spinning" class="spin-btn">Lancer la roulette</button>
-          <button *ngIf="selectedActivity && selectedActivity.type === 'minigame'" (click)="startMiniGame()" class="minigame-btn">Jouer au mini-jeu</button>
-          <div *ngIf="showMiniGame" class="minigame">
-            <ng-container [ngSwitch]="miniGameType">
-              <div *ngSwitchCase="'guessNumber'">
-                <p>Devine le nombre entre 1 et 5 :</p>
-                <input type="number" min="1" max="5" [(ngModel)]="guessInput" class="guess-input" />
-                <button (click)="checkGuess()">Valider</button>
-                <div *ngIf="guessResult" class="guess-result">{{ guessResult }}</div>
-              </div>
-            </ng-container>
+
+          <div class="badges" *ngIf="badges.length">
+            <span *ngFor="let badge of badges" class="badge">
+              {{ badge }}
+            </span>
           </div>
-          <button (click)="closeRoulette()" class="close-btn">Fermer</button>
+        </div>
+
+        <div class="quote" *ngIf="currentQuote">
+          <blockquote>“{{ currentQuote }}”</blockquote>
         </div>
       </div>
     </main>
   `,
   styles: `
-    .roulette-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.18);
+    .focus-app {
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
+      background: linear-gradient(135deg, #1d212eff 0%, #20202bff 100%);
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, sans-serif;
+      padding: 1.5rem;
     }
-    .roulette-modal {
-      background: #fff;
-      border-radius: 1.2rem;
-      box-shadow: 0 4px 24px #0002;
-      padding: 2rem 1.5rem 1.5rem 1.5rem;
-      min-width: 320px;
+
+    .focus-card {
+      background: rgba(30, 41, 59, 0.9);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
       text-align: center;
-      position: relative;
-      animation: popin 0.3s cubic-bezier(.68,-0.55,.27,1.55);
+      border: 1px solid rgba(255,255,255,0.08);
     }
-    @keyframes popin {
-      0% { transform: scale(0.7); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
+
+    .title {
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #c7d2fe;
+      margin-bottom: 2rem;
     }
-    .roulette-wheel {
-      margin: 1.2rem 0 1.5rem 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #6c63ff;
-      min-height: 2.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+
+    .time-input-container {
+      margin-bottom: 2rem;
+      text-align: left;
     }
-    .spin-btn, .close-btn, .minigame-btn {
-      background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-      color: #222;
-      border: none;
-      border-radius: 1rem;
-      padding: 0.5rem 1.5rem;
-      font-size: 1rem;
-      margin: 0.5rem 0.5rem 0 0.5rem;
-      cursor: pointer;
-      box-shadow: 0 2px 8px #38f9d733;
-      transition: background 0.2s;
-    }
-    .spin-btn[disabled] {
-      background: #e0e0e0;
-      color: #aaa;
-      cursor: not-allowed;
-    }
-    .minigame {
-      margin: 1rem 0 0.5rem 0;
-      background: #f3f0ff;
-      border-radius: 1rem;
-      padding: 1rem;
-      color: #6c63ff;
-      font-size: 1rem;
-    }
-    .guess-input {
-      width: 3rem;
-      text-align: center;
-      margin: 0 0.5rem;
-      border-radius: 0.5rem;
-      border: 1px solid #b3b3ff;
-      padding: 0.2rem 0.5rem;
-    }
-    .guess-result {
-      margin-top: 0.5rem;
-      font-weight: 600;
-      color: #43e97b;
-    }
-    .focus-mode {
-      max-width: 400px;
-      margin: 2rem auto;
-      padding: 2rem;
-      background: linear-gradient(135deg, #f8fafc 60%, #e0e7ff 100%);
-      border-radius: 1.5rem;
-      box-shadow: 0 2px 16px #0001;
-      text-align: center;
-    }
-    .timer-container {
-      margin: 2rem 0 1rem 0;
-    }
-    .timer-display {
-      font-size: 3rem;
-      font-weight: bold;
-      margin-bottom: 1rem;
-      color: #6c63ff;
-      letter-spacing: 2px;
-      text-shadow: 0 2px 8px #b3b3ff44;
-    }
-    .start-btn {
-      background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-      color: #222;
-      border: none;
-      border-radius: 1rem;
-      padding: 0.7rem 2rem;
+
+    .time-input-container label {
+      display: block;
       font-size: 1.1rem;
-      margin-right: 1rem;
-      cursor: pointer;
-      box-shadow: 0 2px 8px #38f9d733;
-      transition: background 0.2s;
-    }
-    .start-btn[disabled] {
-      background: #e0e0e0;
-      color: #aaa;
-      cursor: not-allowed;
-    }
-    .points-badges {
-      margin: 1.5rem 0;
-    }
-    .points {
-      font-size: 1.2rem;
+      color: #94a3b8;
       margin-bottom: 0.5rem;
-      color: #4f8cff;
-      font-weight: 600;
     }
-    .badges {
+
+    .time-input {
+      width: 100%;
+      max-width: 120px;
+      padding: 0.8rem;
+      font-size: 1.3rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: #e2e8f0;
+      text-align: center;
+    }
+
+    .error {
+      color: #ef4444;
+      font-size: 0.9rem;
       margin-top: 0.5rem;
+      display: block;
     }
-    .badge {
-      background: linear-gradient(90deg, #ffe082 0%, #ffd6e0 100%);
-      color: #6c63ff;
-      border-radius: 1rem;
-      padding: 0.2rem 0.8rem;
+
+    .timer-display {
+      font-size: 5.5rem;
+      font-weight: 300;
+      color: #c7d2fe;
+      margin: 1.5rem 0 2rem;
+      letter-spacing: 0.15rem;
+    }
+
+    .minutes, .seconds {
+      display: inline-block;
+      min-width: 4.5rem;
+    }
+
+    .separator {
       margin: 0 0.2rem;
-      font-size: 1rem;
-      display: inline-block;
-      box-shadow: 0 1px 4px #ffd6e055;
+      opacity: 0.6;
     }
-    .quote {
-      margin-top: 2rem;
+
+    .controls {
+      display: flex;
+      gap: 1.2rem;
+      justify-content: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .btn {
+      padding: 0.9rem 2rem;
+      border: none;
+      border-radius: 12px;
       font-size: 1.1rem;
-      color: #6c63ff;
-      background: #f3f0ff;
-      border-radius: 1rem;
-      padding: 0.7rem 1.2rem;
-      display: inline-block;
-      box-shadow: 0 1px 4px #b3b3ff22;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .primary {
+      background: #6366f1;
+      color: white;
+    }
+
+    .primary:hover {
+      background: #4f46e5;
+      transform: translateY(-2px);
+    }
+
+    .primary.active {
+      background: #ef4444;
+    }
+
+    .secondary {
+      background: rgba(255,255,255,0.1);
+      color: #c7d2fe;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .secondary:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .points, .badges {
+      background: rgba(255,255,255,0.08);
+      padding: 1rem 1.5rem;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .label {
+      display: block;
+      font-size: 0.95rem;
+      color: #94a3b8;
+      margin-bottom: 0.3rem;
+    }
+
+    .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #c7d2fe;
+    }
+
+    .badge {
+      background: rgba(99,102,241,0.15);
+      color: #c7d2fe;
+      padding: 0.4rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      margin: 0.3rem;
+      border: 1px solid rgba(99,102,241,0.3);
+    }
+
+    .quote {
+      margin: 2.5rem 0;
+      font-size: 1.15rem;
+      color: #94a3b8;
+      font-style: italic;
+      line-height: 1.6;
+      padding: 1.5rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      border-left: 4px solid #6366f1;
     }
   `
 })
 export default class AchivedComponent {
-  pomodoroDuration = 60 * 60; // 25 minutes
-  timer = this.pomodoroDuration;
+  // Temps par défaut : 25 min
+  defaultDuration = 25 * 60;
+  focusMinutes = 25; // Temps choisi par l'utilisateur
+  timer = this.defaultDuration;
   intervalId: any;
   isRunning = false;
   points = 0;
@@ -205,35 +258,34 @@ export default class AchivedComponent {
   ];
   currentQuote = '';
 
-  // Roulette de pause créative
-  showRoulette = false;
-  spinning = false;
-  selectedActivity: any = null;
-  activities = [
-    { label: 'Étirement express : lève les bras et touche le ciel !', type: 'activity' },
-    { label: 'Mini-jeu : devine le nombre secret !', type: 'minigame' },
-    { label: 'Respiration : inspire 4s, expire 4s, répète 3 fois.', type: 'activity' },
-    { label: 'Citation : “Le bonheur n’est réel que lorsqu’il est partagé.”', type: 'activity' },
-    { label: 'Défi : souris à toi-même dans le miroir !', type: 'activity' },
-    { label: 'Mini-jeu : devine le nombre secret !', type: 'minigame' },
-    { label: 'Pause fun : invente une devinette en 30s.', type: 'activity' },
-    { label: 'Micro-méditation : ferme les yeux 20s.', type: 'activity' }
-  ];
-  // Mini-jeu : devine le nombre
-  showMiniGame = false;
-  miniGameType = '';
-  secretNumber = 0;
-  guessInput: number | null = null;
-  guessResult = '';
+  timeError = '';
 
   get minutes() {
-    return Math.floor(this.timer / 60);
+    return Math.floor(this.timer / 60).toString().padStart(2, '0');
   }
+
   get seconds() {
     return (this.timer % 60).toString().padStart(2, '0');
   }
 
+  get canStart() {
+    return this.focusMinutes >= 5 && this.focusMinutes <= 90 && !this.isRunning;
+  }
+
+  validateTime() {
+    if (this.focusMinutes < 5) {
+      this.timeError = 'Minimum 5 minutes';
+    } else if (this.focusMinutes > 90) {
+      this.timeError = 'Maximum 90 minutes';
+    } else {
+      this.timeError = '';
+      this.timer = this.focusMinutes * 60;
+    }
+  }
+
   toggleTimer() {
+    if (!this.canStart && !this.isRunning) return;
+
     if (!this.isRunning) {
       this.isRunning = true;
       this.intervalId = setInterval(() => {
@@ -243,69 +295,29 @@ export default class AchivedComponent {
           this.completePomodoro();
         }
       }, 1000);
+    } else {
+      this.isRunning = false;
+      clearInterval(this.intervalId);
     }
   }
 
   resetTimer() {
     clearInterval(this.intervalId);
-    this.timer = this.pomodoroDuration;
+    this.timer = this.focusMinutes * 60;
     this.isRunning = false;
   }
 
   completePomodoro() {
     clearInterval(this.intervalId);
     this.isRunning = false;
-    this.timer = this.pomodoroDuration;
+    this.timer = this.focusMinutes * 60;
     this.points += 10;
-    // Débloquer un badge tous les 3 cycles
+
     if (this.points % 30 === 0) {
       const badge = `Cycle x${this.points / 10}`;
       this.badges.push(badge);
     }
-    // Afficher une citation aléatoire
+
     this.currentQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
-    // Afficher la roulette de pause créative
-    this.showRoulette = true;
-    this.selectedActivity = null;
-    this.showMiniGame = false;
-    this.guessInput = null;
-    this.guessResult = '';
-  }
-
-  spinRoulette() {
-    this.spinning = true;
-    this.selectedActivity = null;
-    this.showMiniGame = false;
-    this.guessInput = null;
-    this.guessResult = '';
-    setTimeout(() => {
-      const idx = Math.floor(Math.random() * this.activities.length);
-      this.selectedActivity = this.activities[idx];
-      this.spinning = false;
-    }, 900);
-  }
-
-  closeRoulette() {
-    this.showRoulette = false;
-    this.selectedActivity = null;
-    this.showMiniGame = false;
-    this.guessInput = null;
-    this.guessResult = '';
-  }
-
-  startMiniGame() {
-    this.showMiniGame = true;
-    this.miniGameType = 'guessNumber';
-    this.secretNumber = Math.floor(Math.random() * 5) + 1;
-    this.guessInput = null;
-    this.guessResult = '';
-  }
-
-  checkGuess() {
-    if (this.guessInput === this.secretNumber) {
-      this.guessResult = 'Bravo ! Tu as trouvé le nombre secret 🎉';
-    } else {
-      this.guessResult = 'Raté ! Essaie encore...';
-    }
   }
 }
