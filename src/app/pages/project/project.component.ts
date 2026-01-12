@@ -19,6 +19,7 @@ import { MatCardModule } from '@angular/material/card';
 import { SetTodoComponent } from './todo/set-todo.component';
 import { Task } from '../../core/models/Task.model';
 import { TodoComponent } from "./todo/todo.component";
+import { GoalAddDialogComponent } from '../home/goal/goal-add-dialog.component';
 import {
   // CdkDragDrop,
   CdkDrag,
@@ -107,6 +108,9 @@ drop(event: CdkDragDrop<Task<Timestamp>[]|null>,status: 'backlog' | 'in-progress
       task.status = status;
       this.fs.setTask(this.id(), task);
   }
+  else{
+    console.log('erreur');
+  }
 }
  onDeleteProject(projectId: string) {
     this.fs.deleteData(this.fs.projectCol, projectId);
@@ -114,4 +118,11 @@ drop(event: CdkDragDrop<Task<Timestamp>[]|null>,status: 'backlog' | 'in-progress
     this.snackBar.open(message, '', { duration: 5000 });
   }
 
+openAddGoalDialog() {
+  this.dialog.open(GoalAddDialogComponent, {
+    width: '500px',
+    data: { projectId: this.id() } // Passe le projectId actuel
+  });
 }
+}
+

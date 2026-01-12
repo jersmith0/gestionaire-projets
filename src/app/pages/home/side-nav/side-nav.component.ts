@@ -23,8 +23,10 @@ import { StateService } from '../../../core/service/utilities/state.service';
       <mat-drawer  opened [mode]="viewPort() >= isMedium? 'side': 'over'"    [opened]="viewPort() >= isMedium || isToggleDrawer()">
         <a routerLink="/projects" mat-menu-item routerLinkActive="active-link" (click)="toggleDrawer()"><mat-icon>dataset</mat-icon> Projets</a>
         <a routerLink="/contributors" mat-menu-item routerLinkActive="active-link" (click)="toggleDrawer()"><mat-icon>group</mat-icon>Contributeurs</a>
+        <a routerLink="/goals" mat-menu-item routerLinkActive="active-link" (click)="toggleDrawer()"><mat-icon>task_alt</mat-icon> Objectifs</a>
+
       </mat-drawer>
-      <mat-drawer-content>
+      <mat-drawer-content>  
         <router-outlet/>
       </mat-drawer-content>
 

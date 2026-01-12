@@ -1,11 +1,19 @@
+
 export interface Goal {
   id: string;
-  projectId: string; // Lien avec ton interface Project
-  title: string; // Ex: "Lancer la V2 avant fin Q1"
-  type: 'OKR' | 'KPI';
-  progress: number; // 0–100, calculé automatiquement
+  uid: string; // ID de l'utilisateur propriétaire
+  projectId: string; // ID du projet associé
+  title: string;
+  description?: string;
+  type: 'OKR' | 'KPI'; // Type d'objectif
+  status: 'active' | 'paused' | 'completed' | 'archived'; // Statut de l'objectif
+  progress: number; // Pourcentage de progression (0-100)
   linkedTasks: string[]; // IDs des tâches liées
-  dueDate: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  dueDate: any; // Date d'échéance (Firestore Timestamp ou Date)
+  createdAt: any; // Date de création (Firestore Timestamp ou Date)
+  updatedAt: any; // Date de dernière modification (Firestore Timestamp ou Date)
+  priority?: 'low' | 'medium' | 'high';
+  targetValue?: number;
+  currentValue?: number;
+  unit?: string;
 }

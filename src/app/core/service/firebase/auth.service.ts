@@ -8,7 +8,8 @@ import { Auth,
     sendSignInLinkToEmail,
     ActionCodeSettings, 
     isSignInWithEmailLink, 
-    signInWithEmailLink } from '@angular/fire/auth';
+    signInWithEmailLink, 
+    User} from '@angular/fire/auth';
 
 @Injectable({
   providedIn: 'root'
@@ -37,4 +38,16 @@ export class AuthService {
   }
   
   logout = () => signOut(this.auth);
+
+
+
+
+async getCurrentUser(): Promise<User | null> {
+  return new Promise((resolve) => {
+    const unsubscribe = this.auth.onAuthStateChanged(user => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+}
 }

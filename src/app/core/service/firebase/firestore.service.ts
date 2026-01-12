@@ -1,16 +1,29 @@
 import { Notification } from '../../models/notification.model';
 import { inject, Injectable } from '@angular/core';
 import { Project } from '../../models/project.model';
-import { FieldValue, collection ,doc, Firestore, addDoc, updateDoc, setDoc, query, collectionData, or, orderBy, where, Timestamp, docData, deleteDoc, arrayUnion, getDoc } from '@angular/fire/firestore';
+import { FieldValue, collection, doc, Firestore, addDoc, updateDoc, setDoc, query, collectionData, or, orderBy, where, Timestamp, docData, deleteDoc, arrayUnion, getDoc, collectionGroup, getDocs, arrayRemove, serverTimestamp } from '@angular/fire/firestore';
 import { User } from '@angular/fire/auth';
 import { Task } from '../../models/Task.model';
-import { Observable } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { Goal } from '../../models/Goal.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FirestoreService {
+  async updateGoalStatus(id: string, newStatus: string): Promise<void> {
+  try {
+    const goalRef = doc(this.fs, 'goals', id);
+    await updateDoc(goalRef, { 
+      status: newStatus,
+      updatedAt: new Date()
+    });
+    console.log(`✅ Statut du goal ${id} mis à jour: ${newStatus}`);
+  } catch (error) {
+    console.error('❌ Erreur lors de la mise à jour du statut:', error);
+    throw error;
+  }
+}
   // ...existing code...
   getNotificationsForUser(email: string) {
     const notifColRef = collection(this.fs, this.notificationCol);
@@ -34,17 +47,14 @@ export class FirestoreService {
 
   todoCol = (projectId: string) =>`${this.projectCol}/${projectId}/todos`
 
+
   setProject(projet: Project<FieldValue>){
     const projectColRef = collection(this.fs, this.projectCol);
     const projectDocRef = doc(projectColRef, projet.id);
     return setDoc(projectDocRef, projet,{merge:true})
   }
 
-   setTask(projectId: string, t: Task<FieldValue>) {
-    const todoColRef = collection(this.fs, this.todoCol(projectId));
-    const todoDocRef = doc(todoColRef, t.id);
-    return setDoc(todoDocRef, t, { merge: true });
-  }
+   
 
    getProjects(user: User) {
     const projectColRef = collection(this.fs, this.projectCol);
@@ -77,41 +87,341 @@ export class FirestoreService {
     return deleteDoc(doc(this.fs, colName, id));
   }
 
-  getGoals(projectId: string): Observable<Goal[]> {
-    const goalsCol = collection(this.fs, `projects/${projectId}/goals`);
-    return collectionData(goalsCol, { idField: 'id' }) as Observable<Goal[]>;
+  
+
+  getAllGoals(): Observable<Goal[]> {
+    const goalsQuery = query(collectionGroup(this.fs, 'goals'));
+    return collectionData(goalsQuery, { idField: 'id' }) as Observable<Goal[]>;
   }
+async updateGoalProgressFromTask(projectId: string, task: Task<any>) {
+  if (!task.goalId) return;
 
-  addGoal(projectId: string, goal: Omit<Goal, 'id' | 'progress' | 'createdAt' | 'updatedAt'>) {
-    const goalsCol = collection(this.fs, `projects/${projectId}/goals`);
-    return addDoc(goalsCol, {
-      ...goal,
-      progress: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-  }
+  const goalDoc = doc(this.fs, `projects/${projectId}/goals/${task.goalId}`);
+  const goalSnap = await getDoc(goalDoc);
+  if (!goalSnap.exists()) return;
 
-  linkTaskToGoal(projectId: string, goalId: string, taskId: string) {
-    const goalDoc = doc(this.fs, `projects/${projectId}/goals/${goalId}`);
-    return updateDoc(goalDoc, {
-      linkedTasks: arrayUnion(taskId),
-      updatedAt: new Date()
-    });
-  }
+  const goal = goalSnap.data() as Goal;
+  const tasksSnap = await getDocs(query(
+    collection(this.fs, `projects/${projectId}/tasks`),
+    where('goalId', '==', task.goalId)
+  ));
 
-  // Calcul automatique de la progression (appelable périodiquement ou sur update task)
-  async updateGoalProgress(projectId: string, goalId: string, tasks: Task<Date>[]) {
-    const goalDoc = doc(this.fs, `projects/${projectId}/goals/${goalId}`);
-    const goal = await getDoc(goalDoc).then(snap => snap.data() as Goal);
+  const linkedTasks = tasksSnap.docs.map(d => d.data() as Task<any>);
+  const completed = linkedTasks.filter(t => t.status === 'done').length;
+  const progress = linkedTasks.length > 0 ? Math.round((completed / linkedTasks.length) * 100) : 0;
 
-    const linkedTasks = tasks.filter(t => goal.linkedTasks.includes(t.id));
-    const completed = linkedTasks.filter(t => t.status === 'done').length;
-    const progress = linkedTasks.length > 0 ? Math.round((completed / linkedTasks.length) * 100) : 0;
+  await updateDoc(goalDoc, { progress });
+}
 
-    return updateDoc(goalDoc, { progress, updatedAt: new Date() });
-  }
+
+  // linkTaskToGoal(projectId: string, goalId: string, taskId: string) {
+  //   const goalDoc = doc(this.fs, `projects/${projectId}/goals/${goalId}`);
+  //   return updateDoc(goalDoc, {
+  //     linkedTasks: arrayUnion(taskId),
+  //     updatedAt: new Date()
+  //   });
+  // }
+  // Dans votre FirestoreService
+getAllProjects(): Observable<Project<any>[]> {
+  const projectsRef = collection(this.fs, 'projects');
+  return collectionData(projectsRef, { idField: 'id' }).pipe(
+    map(data => data as Project<any>[])
+  );
+}
+
+getAllTasks(): Observable<Task<any>[]> {
+  const tasksRef = collection(this.fs, 'tasks');
+  return collectionData(tasksRef, { idField: 'id' }).pipe(
+    map(data => data as Task<any>[])
+  );
+}
 
     formatedTimestamp = (t?: Timestamp) => (t?.seconds ? t.toDate() : new Date());
   
+
+    ////////////////////////////////
+    // src/app/core/service/firebase/firestore.service.ts
+
+// ============================================
+// MÉTHODES POUR LIER/DÉLIER TÂCHES ET GOALS
+// ============================================
+
+/**
+ * Lie une tâche à un goal
+ * @param taskId - ID de la tâche
+ * @param goalId - ID du goal
+ */
+// Dans FirestoreService
+async linkTaskToGoal(taskId: string, goalId: string): Promise<void> {
+  try {
+    console.log(`🔗 Tentative de liaison: tâche ${taskId} → goal ${goalId}`);
+    
+    // 1. Vérifier que le goal existe
+    const goalRef = doc(this.fs, 'goals', goalId);
+    const goalSnap = await getDoc(goalRef);
+    
+    if (!goalSnap.exists()) {
+      throw new Error(`Le goal ${goalId} n'existe pas`);
+    }
+    console.log(`✅ Goal ${goalId} trouvé`);
+
+    // 2. Vérifier que la tâche existe (NOUVEAU)
+    const taskRef = doc(this.fs, 'tasks', taskId);
+    const taskSnap = await getDoc(taskRef);
+    
+    if (!taskSnap.exists()) {
+      throw new Error(`La tâche ${taskId} n'existe pas encore dans Firestore`);
+    }
+    console.log(`✅ Tâche ${taskId} trouvée`);
+
+    // 3. Mettre à jour le goal avec arrayUnion
+    await updateDoc(goalRef, {
+      linkedTasks: arrayUnion(taskId),
+      updatedAt: new Date()
+    });
+    console.log(`✅ LinkedTasks mis à jour dans le goal`);
+
+    // 4. Mettre à jour la tâche avec le goalId
+    await updateDoc(taskRef, {
+      goalId: goalId,
+      updatedAt: new Date()
+    });
+    console.log(`✅ GoalId mis à jour dans la tâche`);
+    
+    console.log(`✅ Liaison complète: tâche ${taskId} ↔ goal ${goalId}`);
+  } catch (error) {
+    console.error('❌ Erreur lors de la liaison tâche-goal:', error);
+    throw error;
+  }
+}
+
+/**
+ * Délie une tâche d'un goal
+ * @param taskId - ID de la tâche
+ * @param goalId - ID du goal
+ */
+async unlinkTaskFromGoal(taskId: string, goalId: string): Promise<void> {
+  try {
+    const goalRef = doc(this.fs, 'goals', goalId);
+    
+    // Utiliser arrayRemove pour retirer l'ID
+    await updateDoc(goalRef, {
+      linkedTasks: arrayRemove(taskId),
+      updatedAt: new Date()
+    });
+
+    // Retirer le goalId de la tâche
+    const taskRef = doc(this.fs, 'tasks', taskId);
+    await updateDoc(taskRef, {
+      goalId: null,
+      updatedAt: new Date()
+    });
+    
+    console.log(`✅ Tâche ${taskId} détachée du goal ${goalId}`);
+  } catch (error) {
+    console.error('❌ Erreur lors du détachement tâche-goal:', error);
+    throw error;
+  }
+}
+
+/**
+ * Lie plusieurs tâches à un goal en une seule opération
+ * @param taskIds - Array d'IDs de tâches
+ * @param goalId - ID du goal
+ */
+async linkMultipleTasksToGoal(taskIds: string[], goalId: string): Promise<void> {
+  try {
+    const goalRef = doc(this.fs, 'goals', goalId);
+    
+    // Ajouter tous les IDs en une seule opération
+    await updateDoc(goalRef, {
+      linkedTasks: arrayUnion(...taskIds),
+      updatedAt: new Date()
+    });
+
+    // Mettre à jour toutes les tâches
+    const updatePromises = taskIds.map(taskId => {
+      const taskRef = doc(this.fs, 'tasks', taskId);
+      return updateDoc(taskRef, {
+        goalId: goalId,
+        updatedAt: new Date()
+      });
+    });
+
+    await Promise.all(updatePromises);
+    
+    console.log(`✅ ${taskIds.length} tâches liées au goal ${goalId}`);
+  } catch (error) {
+    console.error('❌ Erreur lors de la liaison multiple:', error);
+    throw error;
+  }
+}
+
+/**
+ * Récupère toutes les tâches liées à un goal
+ * @param goalId - ID du goal
+ * @returns Observable des tâches
+ */
+getTasksByGoalId(goalId: string): Observable<Task<any>[]> {
+  const tasksRef = collection(this.fs, 'tasks');
+  const q = query(tasksRef, where('goalId', '==', goalId));
+  
+  return collectionData(q, { idField: 'id' }).pipe(
+    map(data => data as Task<any>[])
+  );
+}
+
+
+async addGoal(projectId: string, goalData: Partial<Goal>): Promise<string> {
+  try {
+    console.log('🎯 Création du goal pour le projet:', projectId);
+    console.log('📝 Données du goal:', goalData);
+    
+    const goalsRef = collection(this.fs, 'goals');
+    
+    const newGoal = {
+      ...goalData,
+      projectId,
+      linkedTasks: goalData.linkedTasks || [],
+      progress: goalData.progress || 0,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    // 1. Créer le document
+    const docRef = await addDoc(goalsRef, newGoal);
+    console.log('✅ Document créé avec l\'ID:', docRef.id);
+    
+    // 2. IMPORTANT : Ajouter l'ID dans le document lui-même
+    await updateDoc(docRef, { 
+      id: docRef.id 
+    });
+    
+    console.log('✅ Goal créé et sauvegardé avec succès:', docRef.id);
+    
+    return docRef.id;
+  } catch (error) {
+    console.error('❌ Erreur lors de la création du goal:', error);
+    throw error;
+  }
+}
+
+// Dans FirestoreService
+getGoals(projectId: string): Observable<Goal[]> {
+  const goalsRef = collection(this.fs, 'goals');
+  const q = query(goalsRef, where('projectId', '==', projectId));
+  
+  return collectionData(q, { idField: 'id' }).pipe(
+    map(data => {
+      const goals = data as Goal[];
+      console.log('🎯 Goals récupérés:', goals);
+      
+      // Vérifier que chaque goal a bien un ID
+      goals.forEach(goal => {
+        if (!goal.id) {
+          console.error('⚠️ Goal sans ID détecté:', goal);
+        }
+      });
+      
+      return goals;
+    })
+  );
+}
+
+
+// Dans FirestoreService - Assurez-vous que setTask ressemble à ça
+async setTaskaa(projectId: string, task: Task<any>): Promise<void> {
+  try {
+    const taskRef = doc(this.fs, 'tasks', task.id);
+    
+    console.log('💾 Enregistrement de la tâche:', task.id);
+    
+    // Utiliser setDoc avec merge pour créer ou mettre à jour
+    await setDoc(taskRef, task, { merge: true });
+    
+    console.log('✅ Tâche enregistrée dans Firestore:', task.id);
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'enregistrement de la tâche:', error);
+    throw error;
+  }
+}
+
+async setTask(projectId: string, task: Task<FieldValue>) {
+  try {
+    const todoColRef = collection(this.fs, this.todoCol(projectId));
+    const todoDocRef = doc(todoColRef, task.id);
+    await setDoc(todoDocRef, task, { merge: true });
+    console.log('✅ Tâche enregistrée dans Firestore:', task.id);
+
+    return setDoc(todoDocRef, task, { merge: true })
+  }catch(error){
+    console.error('❌ Erreur lors de l\'enregistrement de la tâche:', error);
+
+  };
+  }
+
+  async setTaskw(projectId: string, task: Task<any>): Promise<void> {
+  try {
+    if (!projectId) {
+      throw new Error('projectId est requis');
+    }
+
+    // Chemin : projects/{projectId}/tasks/{taskId}
+    const tasksColRef = collection(this.fs, `projects/${projectId}/todos`);
+    const taskRef = doc(tasksColRef, task.id);
+    console.log('💾 Enregistrement tâche dans projet:', projectId, 'tâche:', task.id);
+    // { merge: true } pour mise à jour partielle si la tâche existe déjà
+    await setDoc(taskRef, task, { merge: true });
+
+    console.log('✅ Tâche enregistrée avec succès');
+  } catch (error) {
+    console.error('❌ Erreur enregistrement tâche:', error);
+    throw error;
+  }
+}
+
+// Dans FirestoreService - VERSION UNIFIÉE
+async setTasko(projectId: string, task: Task<any>): Promise<void> {
+  try {
+    // Utiliser la collection globale 'tasks'
+    const taskRef = doc(this.fs, 'tasks', task.id);
+    
+    console.log('💾 Enregistrement de la tâche:', task.id);
+    
+    // Préparer les données avec timestamp
+    const taskData = {
+      ...task,
+      projectId, // S'assurer que le projectId est bien là
+      updatedAt: serverTimestamp()
+    };
+    
+    // Si c'est une nouvelle tâche, ajouter createdAt
+    if (!task.createdAt) {
+      taskData.createdAt = serverTimestamp();
+    }
+    
+    // Utiliser setDoc avec merge
+    await setDoc(taskRef, taskData, { merge: true });
+    
+    console.log('✅ Tâche enregistrée dans Firestore:', task.id);
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'enregistrement de la tâche:', error);
+    throw error;
+  }
+}
+
+
+// Dans FirestoreService
+getTasks(projectId: string): Observable<Task<any>[]> {
+  // Utiliser la collection globale avec un filtre sur projectId
+  const tasksRef = collection(this.fs, 'tasks');
+  const q = query(tasksRef, where('projectId', '==', projectId));
+  
+  return collectionData(q, { idField: 'id' }).pipe(
+    map(data => {
+      console.log('📋 Tâches chargées pour le projet', projectId, ':', data.length);
+      return data as Task<any>[];
+    })
+  );
+}
 }

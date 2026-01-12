@@ -31,7 +31,12 @@ export const routes: Routes = [
                 title: `Projets - ${APP_NAME }`,
                 loadComponent: () => import('./pages/home/projects/projects.component')
             },
-
+// app.routes.ts — Ajoute juste cette route
+{
+  path: 'goals',
+  title: `Goals / OKRs - ${APP_NAME}`,
+  loadComponent: () => import('./pages/home/goal/goal.component').then(m => m.GoalsComponent)
+},
              {
                 path:'contributors',
                 title: `Contributeurs - ${APP_NAME }`,

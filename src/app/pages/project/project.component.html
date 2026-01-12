@@ -17,7 +17,12 @@
         <button mat-icon-button matTooltip="Supprimer ce projet" (click)="onDeleteProject(project?.id!)" routerLink="/">
             <mat-icon class="alert-action">delete</mat-icon>
         </button>
+        
         }
+        <button mat-raised-button color="primary" (click)="openAddGoalDialog()">
+      <mat-icon>add</mat-icon>
+      Ajouter un objectif
+    </button>
     </div>
 </mat-toolbar>
 <mat-divider/>
