@@ -56,7 +56,7 @@ import { MatDividerModule } from '@angular/material/divider';
         </h1>
 
         <p class="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto">
-          Démarquez-vous avec un site web personnel élégant et moderne. Aucune compétence en code requise. Générez votre portfolio en quelques minutes avec nos outils intelligents.
+          Démarquez-vous avec un site web personnel élégant et moderne. Aucune compétence en code requise.
         </p>
 
         <div class="flex flex-col sm:flex-row gap-5 justify-center mb-16">
@@ -103,7 +103,7 @@ import { MatDividerModule } from '@angular/material/divider';
             </div>
             <h3 class="text-2xl font-semibold mb-3 text-white">Ultra Rapide</h3>
             <p class="text-slate-400 leading-relaxed">
-              Générez votre site en moins de 5 minutes chrono. Notre IA analyse vos données et crée un portfolio personnalisé instantanément.
+              Générez votre site en moins de 10 minutes chrono.
             </p>
           </div>
 
@@ -112,7 +112,7 @@ import { MatDividerModule } from '@angular/material/divider';
             <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-600/20 to-cyan-600/20 flex items-center justify-center mb-6">
               <mat-icon class="text-cyan-400 text-4xl">paid</mat-icon>
             </div>
-            <h3 class="text-2xl font-semibold mb-3 text-white">100% Gratuit</h3>
+            <h3 class="text-2xl font-semibold mb-3 text-white">Mode Gratuit</h3>
             <p class="text-slate-400 leading-relaxed">
               Toutes les fonctionnalités de base sont gratuites, sans carte bancaire. Des options premium pour les besoins avancés.
             </p>
@@ -147,7 +147,7 @@ import { MatDividerModule } from '@angular/material/divider';
             </div>
             <h3 class="text-2xl font-semibold mb-3 text-white">Facile à utiliser</h3>
             <p class="text-slate-400 leading-relaxed">
-              Interface intuitive, pas besoin de connaissances techniques. Importez vos données et laissez l'IA faire le reste.
+              Interface intuitive, pas besoin de connaissances techniques.
             </p>
           </div>
 
@@ -374,7 +374,7 @@ import { MatDividerModule } from '@angular/material/divider';
               <mat-icon class="text-slate-400 group-hover:text-violet-400">expand_more</mat-icon>
             </div>
             <p class="p-4 text-slate-400 leading-relaxed">
-              Inscrivez-vous, remplissez vos informations et ajoutez vos projets. Notre IA génère automatiquement votre portfolio.
+              Inscrivez-vous, remplissez vos informations et ajoutez vos projets. Nous génèrons automatiquement votre portfolio.
             </p>
           </div>
 
