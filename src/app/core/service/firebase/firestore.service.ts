@@ -1,11 +1,12 @@
 import { Notification } from '../../models/notification.model';
 import { inject, Injectable } from '@angular/core';
 import { Project } from '../../models/project.model';
-import { FieldValue, collection, doc, Firestore, addDoc, updateDoc, setDoc, query, collectionData, or, orderBy, where, Timestamp, docData, deleteDoc, arrayUnion, getDoc, collectionGroup, getDocs, arrayRemove, serverTimestamp } from '@angular/fire/firestore';
+import { FieldValue, collection, doc, Firestore, addDoc, updateDoc, setDoc, query, collectionData, or, orderBy, where, Timestamp, docData, deleteDoc, arrayUnion, getDoc, collectionGroup, getDocs, arrayRemove, serverTimestamp, DocumentData, FirestoreDataConverter, QueryDocumentSnapshot } from '@angular/fire/firestore';
 import { User } from '@angular/fire/auth';
 import { Task } from '../../models/Task.model';
-import { catchError, map, Observable, of } from 'rxjs';
+import { catchError, map, Observable, of, switchMap } from 'rxjs';
 import { Goal } from '../../models/Goal.model';
+import { Infos } from '../../models/infos.model';
 
 @Injectable({
   providedIn: 'root'
@@ -42,8 +43,13 @@ export class FirestoreService {
     const notifDocRef = doc(notifColRef, notification.id);
     return setDoc(notifDocRef, notification, { merge: true });
   }
-  createDocId = (colName: string) => doc(collection(this.fs, colName)).id;
   projectCol = "projects";
+infoCol = collection(this.fs, 'infos'); // ou le nom de ta collection
+
+createDocId(path: string): string {
+  const colRef = collection(this.fs, path);
+  return doc(colRef).id;
+}
 
   todoCol = (projectId: string) =>`${this.projectCol}/${projectId}/todos`
 
@@ -54,7 +60,13 @@ export class FirestoreService {
     return setDoc(projectDocRef, projet,{merge:true})
   }
 
-   
+  setInfo(info: Infos) {
+  const infoColRef = collection(this.fs, 'infos');
+  const infoDocRef = doc(infoColRef, info.id);
+  return setDoc(infoDocRef, info, { merge: true });
+}
+
+  
 
    getProjects(user: User) {
     const projectColRef = collection(this.fs, this.projectCol);
@@ -423,5 +435,55 @@ getTasks(projectId: string): Observable<Task<any>[]> {
       return data as Task<any>[];
     })
   );
+}
+
+
+// Dans FirestoreService.ts
+
+
+
+// Converter Infos
+infosConverter: FirestoreDataConverter<Infos> = {
+  toFirestore: (data: Infos) => data,
+  fromFirestore: (snap: QueryDocumentSnapshot): Infos => ({
+    id: snap.id,
+    ...snap.data() as Omit<Infos, 'id'>,
+  }),
+};
+
+// Converter Project (avec Timestamp comme type générique)
+ projectConverter: FirestoreDataConverter<Project<Timestamp>> = {
+  toFirestore: (data: Project<Timestamp>) => data,
+  fromFirestore: (snap: QueryDocumentSnapshot): Project<Timestamp> => ({
+    id: snap.id,
+    ...snap.data() as Omit<Project<Timestamp>, 'id'>,
+  }),
+};
+
+// Méthode getUserProfile
+getUserProfile(uid: string): Observable<Infos | null> {
+  if (!uid) {
+    return of(null);
+  }
+
+  const profileRef = doc(this.fs, 'infos', uid).withConverter(this.infosConverter);
+
+  return docData<Infos>(profileRef).pipe(
+    map(data => data ?? null)  // ← transforme undefined → null
+  );
+}
+
+// Méthode getUserProjects
+getUserProjects(uid: string): Observable<Project<Timestamp>[]> {
+  if (!uid) {
+    return of([] as Project<Timestamp>[]); // Typage explicite pour éviter l'erreur never[]
+  }
+
+  const projectsQuery = query(
+    collection(this.fs, 'projects').withConverter(this.projectConverter),
+    where('uid', '==', uid)
+  );
+
+  return collectionData<Project<Timestamp>>(projectsQuery, { idField: 'id' });
 }
 }

@@ -1,56 +1,113 @@
 import { Component, computed, inject } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import {MatSidenavModule} from '@angular/material/sidenav';
+import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+
 import { IS_MEDIUM } from '../../../app.constants';
 import { WindowsObserverService } from '../../../core/service/utilities/windows-observer.service';
 import { StateService } from '../../../core/service/utilities/state.service';
 
-
 @Component({
   selector: 'app-side-nav',
-  imports: [
-    MatSidenavModule,
-    RouterOutlet,
-    RouterLink,
-    MatIconModule,
-    MatMenuModule,
-    RouterLinkActive,
-    ],
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <mat-drawer-container autosize style="height: calc(100vh - 65px);"> 
-      <mat-drawer  opened [mode]="viewPort() >= isMedium? 'side': 'over'"    [opened]="viewPort() >= isMedium || isToggleDrawer()">
-        <a routerLink="/projects" mat-menu-item routerLinkActive="active-link" (click)="toggleDrawer()"><mat-icon>dataset</mat-icon> Projets</a>
-        <a routerLink="/contributors" mat-menu-item routerLinkActive="active-link" (click)="toggleDrawer()"><mat-icon>group</mat-icon>Contributeurs</a>
-        <a routerLink="/goals" mat-menu-item routerLinkActive="active-link" (click)="toggleDrawer()"><mat-icon>task_alt</mat-icon> Objectifs</a>
+    <div class="flex h-[calc(100vh-64px)] bg-slate-950">
+      <!-- Sidebar -->
+      <aside 
+        class="fixed md:static inset-y-0 left-0 z-40 w-72 bg-slate-950/95 backdrop-blur-lg border-r border-slate-800/50 transform transition-transform duration-300 ease-in-out md:translate-x-0"
+        [class.-translate-x-full]="!isOpen()"
+      >
+        <div class="p-6 flex flex-col h-full">
+          <!-- Liens -->
+          <div class="space-y-1.5 flex-1">
+            <!-- Mon profil -->
+              <a 
+              routerLink="/profil"
+              routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
+              (click)="closeOnMobile()"
+              class="flex items-center gap-4 px-5 py-3.5 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-violet-400 transition-all duration-200 group"
+            >
+              <span class="material-icons text-xl group-hover:scale-110 transition-transform">person</span>
+              <span class="font-medium">Mon profil</span>
+            </a>
+            <a 
+              routerLink="/profil"
+              routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
+              (click)="closeOnMobile()"
+              class="flex items-center gap-4 px-5 py-3.5 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-violet-400 transition-all duration-200 group"
+            >
+              <span class="material-icons text-xl group-hover:scale-110 transition-transform">person</span>
+              <span class="font-medium">Mon profil</span>
+            </a>
 
-      </mat-drawer>
-      <mat-drawer-content>  
-        <router-outlet/>
-      </mat-drawer-content>
+            <!-- Projets -->
+            <a 
+              routerLink="/Projets"
+              routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
+              (click)="closeOnMobile()"
+              class="flex items-center gap-4 px-5 py-3.5 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-violet-400 transition-all duration-200 group"
+            >
+              <span class="material-icons text-xl group-hover:scale-110 transition-transform">folder</span>
+              <span class="font-medium">Projets</span>
+            </a>
 
-    </mat-drawer-container> 
+            <!-- Prévisualiser -->
+            <a 
+              routerLink="/visual"
+              routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
+              (click)="closeOnMobile()"
+              class="flex items-center gap-4 px-5 py-3.5 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-violet-400 transition-all duration-200 group"
+            >
+              <span class="material-icons text-xl group-hover:scale-110 transition-transform">visibility</span>
+              <span class="font-medium">Prévisualiser</span>
+            </a>
+
+            <!-- Contributeurs -->
+            <a 
+              routerLink="/contributors"
+              routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
+              (click)="closeOnMobile()"
+              class="flex items-center gap-4 px-5 py-3.5 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-violet-400 transition-all duration-200 group"
+            >
+              <span class="material-icons text-xl group-hover:scale-110 transition-transform">group</span>
+              <span class="font-medium">Contributeurs</span>
+            </a>
+
+            <!-- Objectifs -->
+            <a 
+              routerLink="/goals"
+              routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
+              (click)="closeOnMobile()"
+              class="flex items-center gap-4 px-5 py-3.5 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-violet-400 transition-all duration-200 group"
+            >
+              <span class="material-icons text-xl group-hover:scale-110 transition-transform">task_alt</span>
+              <span class="font-medium">Objectifs</span>
+            </a>
+          </div>
+
+          <!-- Bas de sidebar -->
+         
+        </div>
+      </aside>
+
+      <!-- Contenu principal -->
+      <main class="flex-1 overflow-auto bg-gradient-to-b from-slate-950 to-slate-900">
+        <router-outlet />
+      </main>
+    </div>
   `,
-  styles: `
-  
-
-    mat-drawer{
-      width: 220px;
-      border-right: 1px solid var(--mat-sys-outline-variant); 
-      border-radius: 0%;
-    }
-    .active-link{
-    background: var(--mat-sys-outline-variant)
-  }
-  `,
+  styles: [] // Plus besoin de styles ici
 })
 export class SideNavComponent {
-
-  isMedium = IS_MEDIUM
-  viewPort = inject(WindowsObserverService).width;
+  medium = IS_MEDIUM;
+  viewport = inject(WindowsObserverService).width;
   state = inject(StateService);
-  isToggleDrawer = computed(()=> this.state.isToggleDrawer());
-  toggleDrawer = () => this.state.isToggleDrawer.update((value) => !value);
 
+  isOpen = computed(() => this.viewport() >= this.medium || this.state.isToggleDrawer());
+
+  closeOnMobile() {
+    if (this.viewport() < this.medium) {
+      this.state.isToggleDrawer.set(false);
+    }
+  }
 }

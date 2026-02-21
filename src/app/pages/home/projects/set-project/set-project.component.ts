@@ -21,7 +21,6 @@ import { Project } from '../../../../core/models/project.model';
   imports: [ReactiveFormsModule,
      MatDialogModule,
       MatDivider, 
-      MatCardContent,
       MatFormFieldModule,
       MatInputModule,
       MatButtonModule,
@@ -41,13 +40,63 @@ import { Project } from '../../../../core/models/project.model';
   `
 })
 export class SetProjectComponent implements OnInit{
-    ngOnInit(): void {
-    if (this.project) {
-      this.projectForm.patchValue(this.project);
-      this.removeContributorControl(0);
-      this.project.contributors?.forEach((c) => this.addContributorControl(c));
-    }
+   
+// set-project.component.ts
+
+// ... imports inchangés
+
+contributorFormControl(name: string = '') {
+  return this.fb.nonNullable.control(name.trim(), [
+    Validators.required,
+    Validators.minLength(2),          // optionnel : au moins 2 caractères pour un nom
+    Validators.maxLength(100)         // optionnel : limite raisonnable
+  ]);
+}
+
+addContributorControl(name: string = '') {
+  const control = this.contributorFormControl(name);
+  this.projectForm.controls.contributors.push(control);
+}
+
+ngOnInit(): void {
+  console.log('Projet reçu dans le dialogue :', this.project);
+
+  // 1. Toujours vider le FormArray au démarrage (sécurité absolue)
+  while (this.projectForm.controls.contributors.length > 0) {
+    this.projectForm.controls.contributors.removeAt(0);
   }
+
+  if (this.project) {
+    // 2. Remplir les champs simples
+    this.projectForm.patchValue({
+      title: this.project.title || '',
+      description: this.project.description || '',
+    });
+
+    // 3. Remplir le FormArray avec les noms réels
+    const contributors = this.project.contributors || [];
+    console.log('Noms extraits de Firestore :', contributors);
+
+    if (contributors.length > 0) {
+      contributors.forEach(name => {
+        if (name && typeof name === 'string' && name.trim()) {
+          console.log('Ajout du nom :', name);
+          this.addContributorControl(name.trim());
+        }
+      });
+    } else {
+      // Si aucun contributeur → ajoute un champ vide
+      this.addContributorControl();
+    }
+  } else {
+    // Mode création → un champ vide par défaut
+    this.addContributorControl();
+  }
+
+  // Debug final
+  console.log('Form après remplissage :', this.projectForm.value);
+  console.log('Contributors FormArray final :', this.projectForm.controls.contributors.value);
+}
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
@@ -63,15 +112,7 @@ export class SetProjectComponent implements OnInit{
     contributors: this.fb.array([this.contributorFormControl()]),
   });
 
-  contributorFormControl(email?: string) {
-    return this.fb.nonNullable.control(email ?? '', [Validators.email]);
-  }
-
-  addContributorControl(email?: string) {
-    this.projectForm.controls.contributors.push(
-      this.contributorFormControl(email)
-    );
-  }
+ 
   removeContributorControl(index: number) {
     this.projectForm.controls.contributors.removeAt(index);
   }

@@ -2,6 +2,11 @@
 // Custom Theming for Angular Material
 // For more information: https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
+@import "tailwindcss";
+
+@layer base, components, utilities;
+
+/* Tes styles personnalisés ici */
 
 html {
   font-family: "Lato", serif;
@@ -21,7 +26,7 @@ html, body { height: 100%; }
 body {
   margin: 0;
   padding: 0;
-  background: var(--mat-sys-surface);
+  background: #04091b;
   color: var(--mat-sys-on-surface);
 
   //Custom scroll bar
@@ -123,3 +128,5 @@ body.dark-theme {
     filter: brightness(1);
   }
 }
+
+

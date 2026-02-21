@@ -1,55 +1,110 @@
-<mat-card appearance="outlined" style="max-width: max-content; margin: 2rem auto;">
-    <mat-card-header>
-        <mat-card-title align="center"><b>{{ appName }}</b></mat-card-title>
-        <mat-card-subtitle>Connectez-vous et gérez vos projets en un clic
-        </mat-card-subtitle>
-    </mat-card-header>
-    <mat-divider />
-    <mat-card-content>
-       @if (loading()) {
-        <app-login-skeleton/>
-       }@else if (emailSent()) {
-         <span style="width: 500px; display: block; margin-top: 1rem">
-            Un mail a été envoyé à {{ emailSent() }}
-            <button mat-button color="primary" style="text-decoration: underline" (click)="resetState()">
-                Email non reçu ?
+<!-- login.component.html -->
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 px-6 py-12">
+  <div class="w-full max-w-md">
+    <!-- Carte principale avec glassmorphism -->
+    <div class="glass rounded-3xl overflow-hidden shadow-2xl shadow-black/50 border border-slate-800/50 backdrop-blur-lg">
+      <!-- Header -->
+      <div class="p-8 pb-6 text-center border-b border-slate-800/50">
+        <div class="flex justify-center items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl bg-violet-600  flex items-center justify-center text-white font-bold text-2xl">
+            P
+          </div>
+          <h1 class="text-3xl font-extrabold b bg-clip-text text-white">
+            {{ appName }}
+          </h1>
+        </div>
+        <p class="text-slate-400 text-lg">
+          Connectez-vous et gérez vos projets en un clic
+        </p>
+      </div>
+
+      <!-- Contenu -->
+      <div class="p-8">
+        @if (loading()) {
+          <!-- Skeleton pendant chargement -->
+          <div class="space-y-6">
+            <div class="h-12 bg-slate-800/70 rounded-xl animate-pulse"></div>
+            <div class="h-12 bg-slate-800/70 rounded-xl animate-pulse"></div>
+            <div class="h-12 bg-slate-800/70 rounded-xl animate-pulse"></div>
+          </div>
+        } @else if (emailSent()) {
+          <!-- État "email envoyé" -->
+          <div class="text-center space-y-6">
+            <span class="material-icons text-cyan-400 text-6xl animate-bounce">mark_email_read</span>
+            <p class="text-slate-300 text-lg">
+              Un mail a été envoyé à <strong class="text-violet-400">{{ emailSent() }}</strong>
+            </p>
+            <button 
+              (click)="resetState()"
+              class="text-violet-400 hover:text-violet-300 underline transition-colors">
+              Email non reçu ?
             </button>
-        </span>
-       }
-       @else {
-            <main style="padding: 1rem 0;">
-            <button mat-flat-button (click)="loginGoogle()" style="width: 100%">
-                Connectez avec Google
+          </div>
+        } @else {
+          <!-- Formulaire de login -->
+          <div class="space-y-6">
+            <!-- Bouton Google -->
+            <button 
+              (click)="loginGoogle()"
+              class="w-full flex items-center justify-center gap-3 py-4 px-6 bg-slate-800/70 border border-slate-700 rounded-xl text-white font-medium hover:bg-slate-700/70 hover:border-blue-600/50 transition-all duration-300 group">
+              <img src="https://www.google.com/favicon.ico" alt="Google" class="w-5 h-5">
+              <span>Continuer avec Google</span>
             </button>
-            <div class="divider">
-                <mat-divider />
-                <span> ou avec </span>
-                <mat-divider></mat-divider>
+
+            <!-- Séparateur -->
+            <div class="relative flex items-center justify-center my-4">
+              <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-slate-700"></div>
+              </div>
+              <span class="relative bg-slate-950 px-4 text-slate-500 text-sm">
+                ou avec un email
+              </span>
             </div>
-            <form #emailForm="ngForm" align="end" (ngSubmit)="emailFormSubmit(emailForm)">
-                <mat-form-field appearance="outline" style="width: 100%;">
-                    <mat-label>Email</mat-label>
-                    <input matInput ngModel type="email" name="email" required email
-                        placeholder="Ex: Example@gmail.com" #email="ngModel">
-                    @if (!email.errors?.['required'] && email.errors?.['email']) {
-                    <mat-error> Email invalide </mat-error>
-                    } @if (email.errors?.['required']) {
-                    <mat-error> Email obligaoire ! </mat-error>
-                    }
-                </mat-form-field>
-                <button class="email-auth-btn" mat-stroked-button type="submit" [disabled]="emailForm.invalid">
-                    Continuer
-                </button>
+
+            <!-- Formulaire email -->
+            <form #emailForm="ngForm" (ngSubmit)="emailFormSubmit(emailForm)" class="space-y-5">
+              <div>
+                <input 
+                  matInput 
+                  ngModel 
+                  type="email" 
+                  name="email" 
+                  required 
+                  email
+                  placeholder="exemple@gmail.com"
+                  #emailCtrl="ngModel"
+                  class="w-full px-5 py-4 bg-slate-900/70 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/30 outline-none transition-all duration-300">
+                
+                @if (emailCtrl.invalid && (emailCtrl.dirty || emailCtrl.touched)) {
+                  <p class="mt-2 text-sm text-red-400">
+                    @if (emailCtrl.errors?.['required']) { Email obligatoire }
+                    @if (emailCtrl.errors?.['email']) { Format email invalide }
+                  </p>
+                }
+              </div>
+
+              <button 
+                type="submit"
+                [disabled]="emailForm.invalid || loading()"
+                class="w-full py-4 px-6 bg-blue-600 to-cyan-600 text-white font-semibold rounded-xl  disabled:opacity-50 disabled disabled:cursor-not-allowed" style="cursor: pointer;">
+                Continuer
+              </button>
             </form>
-        </main>
-       }
-    
-        
-    </mat-card-content>
-    <mat-divider />
-    <mat-card-footer align="center" style="padding: 1rem 0">
-        {{ appName }}©{{ date.getFullYear() }}
-        <!-- , A propos de
-        <a href="#" target="_blank">{{ company }}</a> -->
-    </mat-card-footer>
-</mat-card>
+          </div>
+        }
+      </div>
+
+      <!-- Footer -->
+      <!-- <div class="p-6 border-t border-slate-800/50 text-center text-slate-500 text-sm">
+        {{ appName }} © {{ date.getFullYear() }}
+      </div>
+    </div> -->
+
+    <!-- Lien retour landing (optionnel) -->
+    <!-- <div class="text-center mt-8">
+      <a routerLink="" class="text-slate-400 hover:text-violet-400 transition-colors" style="cursor: pointer;">
+        ← Retour
+      </a>
+    </div> -->
+  </div>
+</div>

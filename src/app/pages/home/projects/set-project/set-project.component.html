@@ -1,62 +1,116 @@
-<h2 mat-dialog-title>{{ project ? "Modifier ce projet" : "Nouveau projet" }}</h2>
-<mat-divider/>
-<mat-dialog-content>
-    <form [formGroup]="projectForm">
-        <mat-form-field appearance="outline">
-            <mat-label>Titre</mat-label>
-            <input matInput #titleInput maxlength="50" placeholder="Ex. Création d'un logiciel de gestion de projet"
-                formControlName="title" />
-            <mat-hint align="end">{{ titleInput.value.length }}/50</mat-hint>
+<h2 mat-dialog-title class="text-2xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent flex items-center gap-3">
+  <span class="material-icons text-3xl text-violet-400">edit_note</span>
+  {{ project ? 'Modifier le projet' : 'Nouveau projet' }}
+</h2>
 
-            @if (projectForm.controls.title.hasError('required')) {
-            <mat-error>le titre est obligatoire</mat-error>
+<mat-divider class="border-slate-700 my-4" />
+
+<mat-dialog-content class="p-6 bg-slate-950/70 backdrop-blur-sm rounded-xl border border-slate-800/50">
+  <form [formGroup]="projectForm" class="space-y-6">
+    <!-- Titre -->
+    <mat-form-field appearance="outline" class="w-full" floatLabel="always">
+      <input 
+        matInput 
+        #titleInput 
+        maxlength="50" 
+        placeholder="Mom du projet ou de l'application"
+        formControlName="title"
+        class="text-white"
+      />
+      <mat-hint align="end" class="text-slate-500">
+        {{ titleInput.value.length }} / 50
+      </mat-hint>
+      @if (projectForm.controls.title.hasError('required') && projectForm.controls.title.touched) {
+        <mat-error class="text-red-400">Le titre est obligatoire</mat-error>
+      }
+    </mat-form-field>
+
+    <!-- Description -->
+    <mat-form-field appearance="outline" class="w-full" floatLabel="always">
+      <textarea 
+        matInput 
+        cols="30" 
+        rows="5" 
+        maxlength="500" 
+        #descriptionInput 
+        placeholder="Description du projet "
+        formControlName="description"
+        class="text-white resize-y min-h-[120px]"
+      ></textarea>
+      <mat-hint align="end" class="text-slate-500">
+        {{ descriptionInput.value.length }} / 500
+      </mat-hint>
+      @if (projectForm.controls.description.hasError('required') && projectForm.controls.description.touched) {
+        <mat-error class="text-red-400">La description est obligatoire</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-divider class="border-slate-700 my-6" />
+
+    <!-- Contributeurs -->
+    <div formArrayName="contributors" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h4 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+          <span class="material-icons text-violet-400">group_add</span>
+          Outils/frameworks
+        </h4>
+        <span class="text-sm text-slate-500">
+          {{ projectForm.controls.contributors.controls.length }} / 5
+        </span>
+      </div>
+
+      @let contributorControls = projectForm.controls.contributors.controls;
+      @for (control of contributorControls; track $index) {
+        <div class="flex items-center gap-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800/50 hover:border-violet-600/50 transition-all duration-300">
+          <mat-form-field appearance="outline" class="flex-1">
+            <input 
+              matInput 
+              type="text" 
+              placeholder="Ex: React"
+              [formControlName]="$index"
+              class="text-white"
+            />
+            <!-- @if (control.hasError('email') && control.touched) {
+              <mat-error class="text-red-400">Email invalide</mat-error>
             }
-        </mat-form-field>
+            @if (control.hasError('required') && control.touched) {
+              <mat-error class="text-red-400">Email requis</mat-error>
+            } -->
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-            <mat-label>Déscription</mat-label>
-            <textarea matInput cols="30" rows="5" maxlength="500" #descriptionInput placeholder="Descrivez ce projet..."
-                formControlName="description"></textarea>
-            <mat-hint align="end">{{ descriptionInput.value.length }}/500</mat-hint>
-            @if (projectForm.controls.description.hasError('required')) {
-            <mat-error>la description est obligatoire</mat-error>
-            }
-        </mat-form-field>
-
-        <mat-divider />
-
-         <div formArrayName="contributors">
-            <h4>Contributeurs</h4>
-            @let contributorControls = projectForm.controls.contributors.controls;
-            @for (contributorControl of contributorControls; track $index) {
-            <div class="contributor-form">
-                <mat-form-field appearance="outline">
-                    <mat-label>Email</mat-label>
-                    <input matInput type="email" placeholder="Ex. contributor@email.com" [formControlName]="$index" />
-                    @if (contributorControl.hasError('email')) {
-                    <mat-error>Email invalid</mat-error>
-                    }
-                </mat-form-field>
-
-                @if($index) {
-                <button mat-icon-button (click)="removeContributorControl($index)">
-                    <mat-icon class="alert-action">delete</mat-icon>
-                </button>
-                }
-            </div>
-            } @if(contributorControls.length < 5) { 
-                <div align="end">
-                    <button mat-button (click)="addContributorControl()">
-                        + Contributeur
-                    </button>
-                 </div>
-            }
-            <br />
+          @if ($index > 0) {
+            <button 
+              mat-icon-button 
+              color="warn" 
+              (click)="removeContributorControl($index)"
+              matTooltip="Supprimer"
+              class="hover:bg-red-900/30 transition-colors">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
         </div>
-        <mat-divider />
-    </form>
+      }
+
+      @if (contributorControls.length < 5) {
+        <div class="text-right">
+          <button 
+            mat-stroked-button 
+            color="primary"
+            (click)="addContributorControl()"
+            class="border-violet-600 text-violet-400 hover:bg-violet-950/30 hover:border-violet-500 transition-all">
+            <mat-icon class="mr-2">person_add</mat-icon>
+            Ajouter un outil
+          </button>
+        </div>
+      }
+    </div>
+  </form>
 </mat-dialog-content>
-<mat-dialog-actions align="end">
+
+<mat-divider class="border-slate-700 my-4" />
+
+  
+  <mat-dialog-actions align="end" >
     @let user = USER$ | async;
     <button mat-button mat-dialog-close>Annuler</button>
     <button mat-flat-button (click)="onSubmit(user)">Enregistrer</button>
