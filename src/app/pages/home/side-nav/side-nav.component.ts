@@ -22,16 +22,14 @@ import { StateService } from '../../../core/service/utilities/state.service';
           <div class="space-y-1.5 flex-1">
             <!-- Mon profil -->
               <a 
-              routerLink="/profil"
               routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
               (click)="closeOnMobile()"
               class="flex items-center gap-4 px-5 py-3.5 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-violet-400 transition-all duration-200 group"
             >
               <span class="material-icons text-xl group-hover:scale-110 transition-transform">person</span>
-              <span class="font-medium">Mon profil</span>
             </a>
             <a 
-              routerLink="/profil"
+              routerLink="/home/profil"
               routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
               (click)="closeOnMobile()"
               class="flex items-center gap-4 px-5 py-3.5 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-violet-400 transition-all duration-200 group"
@@ -42,7 +40,7 @@ import { StateService } from '../../../core/service/utilities/state.service';
 
             <!-- Projets -->
             <a 
-              routerLink="/Projets"
+              routerLink="/home/Projets"
               routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
               (click)="closeOnMobile()"
               class="flex items-center gap-4 px-5 py-3.5 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-violet-400 transition-all duration-200 group"
@@ -52,7 +50,7 @@ import { StateService } from '../../../core/service/utilities/state.service';
             </a>
 
             <!-- Prévisualiser -->
-            <a 
+            <!-- <a 
               routerLink="/visual"
               routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
               (click)="closeOnMobile()"
@@ -60,10 +58,18 @@ import { StateService } from '../../../core/service/utilities/state.service';
             >
               <span class="material-icons text-xl group-hover:scale-110 transition-transform">visibility</span>
               <span class="font-medium">Prévisualiser</span>
+            </a> -->
+
+               <a 
+              routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
+              class="flex items-center gap-4 px-5 py-3.5 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-violet-400 transition-all duration-200 group"
+            >
+              <span class="material-icons text-xl group-hover:scale-110 transition-transform">settings</span>
+              <span class="font-medium">Parametres</span>
             </a>
 
             <!-- Contributeurs -->
-            <a 
+            <!-- <a 
               routerLink="/contributors"
               routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
               (click)="closeOnMobile()"
@@ -71,10 +77,10 @@ import { StateService } from '../../../core/service/utilities/state.service';
             >
               <span class="material-icons text-xl group-hover:scale-110 transition-transform">group</span>
               <span class="font-medium">Contributeurs</span>
-            </a>
+            </a> -->
 
             <!-- Objectifs -->
-            <a 
+            <!-- <a 
               routerLink="/goals"
               routerLinkActive="bg-gradient-to-r from-violet-900/20 to-cyan-900/20 text-white font-semibold border-l-4 border-violet-500"
               (click)="closeOnMobile()"
@@ -82,7 +88,7 @@ import { StateService } from '../../../core/service/utilities/state.service';
             >
               <span class="material-icons text-xl group-hover:scale-110 transition-transform">task_alt</span>
               <span class="font-medium">Objectifs</span>
-            </a>
+            </a> -->
           </div>
 
           <!-- Bas de sidebar -->

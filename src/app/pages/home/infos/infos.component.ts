@@ -8,6 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Infos } from '../../../core/models/infos.model';
 import { DataService } from '../../../core/service/firebase/data.service';
+import { RouterLink } from '@angular/router';
+
 
 @Component({
   selector: 'app-profile-infos',
@@ -19,6 +21,7 @@ import { DataService } from '../../../core/service/firebase/data.service';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    RouterLink
   ],
   template: `
     <div class="w-full bg-slate-950/75 backdrop-blur-lg rounded-2xl border border-slate-800/50 shadow-2xl overflow-hidden">
@@ -26,7 +29,7 @@ import { DataService } from '../../../core/service/firebase/data.service';
       <div class="px-6 py-6 md:py-8 border-b border-slate-800/50 text-center">
        <div class="pt-8 md:pt-12 lg:pt-16">  <!-- ← espace en haut (progressif selon écran) -->
   <h2 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent text-center">
-    Compléter / Modifier mon profil
+    Mon profil
   </h2>
 </div>
         <p class="mt-3 text-slate-400 text-lg">
@@ -197,7 +200,7 @@ import { DataService } from '../../../core/service/firebase/data.service';
               Annuler
             </button>
 
-            <button 
+            <button
             type="button"
               routerLink="/visual"
               mat-flat-button

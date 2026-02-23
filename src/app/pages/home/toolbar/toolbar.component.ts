@@ -120,7 +120,7 @@ import { MatDividerModule } from "@angular/material/divider";
             [matMenuTriggerFor]="profileMenu"
           >
             <img 
-              [src]="(user$ | async)?.photoURL ?? 'assets/avatar.png'"
+              [src]="(user$ | async)?.photoURL"
               alt="Profil"
               class="w-9 h-9 md:w-10 md:h-10 rounded-full object-cover border-2 border-slate-700 group-hover:border-violet-500 transition-all duration-300 shadow-md"
             >

@@ -17,15 +17,15 @@ export const routes: Routes = [
         path:'login',
         title: `Connexion - ${APP_NAME }`,
         loadComponent:() => import ('./pages/login/login.component'),
-        ...canActivate(redirectLoggedInToHome)
+        // ...canActivate(redirectLoggedInToHome)
     }, 
 
 
     {
-        path:'',
+        path:'home',
         title: `${APP_NAME }`,
         loadComponent:() => import ('./pages/home/home.component'),
-        ...canActivate(redirectUnauthorizedToLogin),
+        // ...canActivate(redirectUnauthorizedToLogin),
         children:[
             {
                 path:'profil',
@@ -90,7 +90,7 @@ export const routes: Routes = [
             },
 
         {
-                path:'landing',
+                path:'',
                 title: `landing- ${APP_NAME }`,
                 loadComponent: () => import('./pages/home/landing/landing.component')
                  .then(m => m.LandingComponent),

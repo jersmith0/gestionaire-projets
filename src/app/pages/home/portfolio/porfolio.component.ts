@@ -33,7 +33,7 @@ import { SimpleListComponent } from "../projects/project-list/simple-list.compon
       <!-- Header fixe (Preview Mode) -->
       <div class="fixed top-0 left-0 right-0 bg-primary/95 text-primary-foreground backdrop-blur p-4 z-50 flex justify-between items-center shadow-lg">
         <div class="flex items-center gap-2">
-          <a routerLink="/profil">
+          <a routerLink="/home/profil">
             <button mat-button class="text-primary-foreground hover:bg-white/20 hover:text-primary-foreground">
               <mat-icon class="mr-2" fontSet="material-icons">arrow_back</mat-icon>
               Retour

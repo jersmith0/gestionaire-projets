@@ -82,7 +82,7 @@ private router = inject(Router);
         this.auth.loginWithEmailLink();
       }
       if (user) {
-        this.router.navigate(['/']);
+        this.router.navigate(['/home/profil']);
       }
     });
   }
