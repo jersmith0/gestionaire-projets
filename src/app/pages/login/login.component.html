@@ -1,110 +1,181 @@
 <!-- login.component.html -->
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 px-6 py-12">
-  <div class="w-full max-w-md">
-    <!-- Carte principale avec glassmorphism -->
-    <div class="glass rounded-3xl overflow-hidden shadow-2xl shadow-black/50 border border-slate-800/50 backdrop-blur-lg">
-      <!-- Header -->
-      <div class="p-8 pb-6 text-center border-b border-slate-800/50">
-        <div class="flex justify-center items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-xl bg-violet-600  flex items-center justify-center text-white font-bold text-2xl">
-            P
-          </div>
-          <h1 class="text-3xl font-extrabold b bg-clip-text text-white">
-            {{ appName }}
-          </h1>
-        </div>
-        <p class="text-slate-400 text-lg">
-          Connectez-vous et creé vos porfolio en un clic
+<div class="login-root">
+
+  <!-- Left panel — branding -->
+  <aside class="login-aside">
+    <div class="aside-inner">
+      <a routerLink="/" class="aside-logo">
+        <span class="logo-mark">P</span>
+        <span class="logo-text">{{ appName }}</span>
+      </a>
+
+      <div class="aside-copy">
+        <h2 class="aside-title">
+          Votre carrière<br>
+          <em>commence ici.</em>
+        </h2>
+        <p class="aside-sub">
+          Créez un portfolio professionnel en moins de 5 minutes et décrochez des entretiens plus rapidement.
         </p>
       </div>
 
-      <!-- Contenu -->
-      <div class="p-8">
-        @if (loading()) {
-          <!-- Skeleton pendant chargement -->
-          <div class="space-y-6">
-            <div class="h-12 bg-slate-800/70 rounded-xl animate-pulse"></div>
-            <div class="h-12 bg-slate-800/70 rounded-xl animate-pulse"></div>
-            <div class="h-12 bg-slate-800/70 rounded-xl animate-pulse"></div>
-          </div>
-        } @else if (emailSent()) {
-          <!-- État "email envoyé" -->
-          <div class="text-center space-y-6">
-            <span class="material-icons text-cyan-400 text-6xl animate-bounce">mark_email_read</span>
-            <p class="text-slate-300 text-lg">
-              Un mail a été envoyé à <strong class="text-violet-400">{{ emailSent() }}</strong>
-            </p>
-            <button 
-              (click)="resetState()"
-              class="text-violet-400 hover:text-violet-300 underline transition-colors">
-              Email non reçu ?
-            </button>
-          </div>
-        } @else {
-          <!-- Formulaire de login -->
-          <div class="space-y-6">
-            <!-- Bouton Google -->
-            <button 
-              (click)="loginGoogle()"
-              class="w-full flex items-center justify-center gap-3 py-4 px-6 bg-slate-800/70 border border-slate-700 rounded-xl text-white font-medium hover:bg-slate-700/70 hover:border-blue-600/50 transition-all duration-300 group">
-              <img src="https://www.google.com/favicon.ico" alt="Google" class="w-5 h-5">
-              <span>Continuer avec Google</span>
-            </button>
+      <ul class="aside-proof">
+        <li>
+          <span class="proof-icon">✦</span>
+          <span><strong>500+</strong> portfolios publiés ce mois</span>
+        </li>
+        <li>
+          <span class="proof-icon">✦</span>
+          <span>Gratuit pour commencer — sans carte bancaire</span>
+        </li>
+        <li>
+          <span class="proof-icon">✦</span>
+          <span>RGPD · Données chiffrées · Contrôle total</span>
+        </li>
+      </ul>
 
-            <!-- Séparateur -->
-            <div class="relative flex items-center justify-center my-4">
-              <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-slate-700"></div>
-              </div>
-              <span class="relative bg-slate-950 px-4 text-slate-500 text-sm">
-                ou avec un email
-              </span>
+      <div class="aside-quote">
+        <p>"En 48h après avoir publié mon portfolio, j'avais deux messages de recruteurs."</p>
+        <footer>
+          <div class="quote-avatar">A</div>
+          <div>
+            <strong>Alex M.</strong>
+            <span>Développeur Frontend</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right panel — form -->
+  <main class="login-main">
+    <div class="login-card">
+
+      <!-- Loading skeleton -->
+      @if (loading()) {
+        <div class="skeleton-group">
+          <div class="skeleton skeleton--title"></div>
+          <div class="skeleton skeleton--btn"></div>
+          <div class="skeleton-row">
+            <div class="skeleton skeleton--line"></div>
+            <div class="skeleton skeleton--dot"></div>
+            <div class="skeleton skeleton--line"></div>
+          </div>
+          <div class="skeleton skeleton--input"></div>
+          <div class="skeleton skeleton--btn"></div>
+        </div>
+      }
+
+      <!-- Email sent state -->
+      @else if (emailSent()) {
+        <div class="email-sent">
+          <div class="sent-icon">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect width="32" height="32" rx="16" fill="#dbeafe"/>
+              <path d="M8 16l5 5 11-10" stroke="#1a56db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2 class="card-title">Vérifiez votre boîte mail</h2>
+          <p class="card-sub">
+            Un lien de connexion a été envoyé à<br>
+            <strong>{{ emailSent() }}</strong>
+          </p>
+          <p class="sent-hint">
+            Pensez à vérifier vos spams si vous ne le trouvez pas dans 2 minutes.
+          </p>
+          <button class="link-btn" (click)="resetState()">
+            ← Utiliser un autre email
+          </button>
+        </div>
+      }
+
+      <!-- Login form -->
+      @else {
+        <div class="form-group">
+          <div class="card-header">
+            <h1 class="card-title">Connexion</h1>
+            <p class="card-sub">Nouveau ? Votre compte est créé automatiquement.</p>
+          </div>
+
+          <!-- Google -->
+          <button class="btn-google" (click)="loginGoogle()">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+              <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+              <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+            </svg>
+            Continuer avec Google
+          </button>
+
+          <!-- Divider -->
+          <div class="divider">
+            <span class="divider-line"></span>
+            <span class="divider-text">ou par email</span>
+            <span class="divider-line"></span>
+          </div>
+
+          <!-- Email form -->
+          <form #emailForm="ngForm" (ngSubmit)="emailFormSubmit(emailForm)" novalidate>
+            <div class="field">
+              <label for="email" class="field-label">Adresse email</label>
+              <input
+                id="email"
+                type="email"
+                name="email"
+                ngModel
+                required
+                email
+                #emailCtrl="ngModel"
+                placeholder="vous@exemple.com"
+                class="field-input"
+                [class.field-input--error]="emailCtrl.invalid && (emailCtrl.dirty || emailCtrl.touched)"
+              />
+              @if (emailCtrl.invalid && (emailCtrl.dirty || emailCtrl.touched)) {
+                <p class="field-error">
+                  @if (emailCtrl.errors?.['required']) { Veuillez saisir votre email. }
+                  @if (emailCtrl.errors?.['email']) { Format d'email invalide. }
+                </p>
+              }
             </div>
 
-            <!-- Formulaire email -->
-            <form #emailForm="ngForm" (ngSubmit)="emailFormSubmit(emailForm)" class="space-y-5">
-              <div>
-                <input 
-                  matInput 
-                  ngModel 
-                  type="email" 
-                  name="email" 
-                  required 
-                  email
-                  placeholder="exemple@gmail.com"
-                  #emailCtrl="ngModel"
-                  class="w-full px-5 py-4 bg-slate-900/70 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/30 outline-none transition-all duration-300">
-                
-                @if (emailCtrl.invalid && (emailCtrl.dirty || emailCtrl.touched)) {
-                  <p class="mt-2 text-sm text-red-400">
-                    @if (emailCtrl.errors?.['required']) { Email obligatoire }
-                    @if (emailCtrl.errors?.['email']) { Format email invalide }
-                  </p>
-                }
+            <button
+              type="submit"
+              class="btn-submit"
+              [disabled]="emailForm.invalid || loading()">
+              Recevoir mon lien de connexion
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+            @if (sendError()) {
+              <div class="send-error">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M7 4v3M7 9.5h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+                {{ sendError() }}
               </div>
+            }
+          </form>
 
-              <button 
-                type="submit"
-                [disabled]="emailForm.invalid || loading()"
-                class="w-full py-4 px-6 bg-blue-600 to-cyan-600 text-white font-semibold rounded-xl  disabled:opacity-50 disabled disabled:cursor-not-allowed" style="cursor: pointer;">
-                Continuer
-              </button>
-            </form>
-          </div>
-        }
-      </div>
+          <p class="form-note">
+            En continuant, vous acceptez nos
+            <a href="#">Conditions d'utilisation</a>
+            et notre
+            <a href="#">Politique de confidentialité</a>.
+          </p>
+        </div>
+      }
 
-      <!-- Footer -->
-      <!-- <div class="p-6 border-t border-slate-800/50 text-center text-slate-500 text-sm">
-        {{ appName }} © {{ date.getFullYear() }}
-      </div>
-    </div> -->
+    </div>
 
-    <!-- Lien retour landing (optionnel) -->
-    <!-- <div class="text-center mt-8">
-      <a routerLink="" class="text-slate-400 hover:text-violet-400 transition-colors" style="cursor: pointer;">
-        ← Retour
-      </a>
-    </div> -->
-  </div>
+    <!-- Back link -->
+    <a routerLink="/" class="back-link">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M11 7H3M6 4L3 7l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Retour à l'accueil
+    </a>
+  </main>
+
 </div>

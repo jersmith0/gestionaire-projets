@@ -8,17 +8,10 @@ import { SetProjectComponent } from './set-project/set-project.component';
   selector: 'app-projects',
   imports: [ProjectListComponent,MatButtonModule],
   template: `
-      <!-- <button mat-flat-button (click)="onNewProject()">Nouveau projet</button> -->
     <app-project-list />
   `,
   styles: ``
 })
 export default class ProjectsComponent {
-  // dialog =inject(MatDialog);
-  // onNewProject(){
-  //    this.dialog.open(SetProjectComponent, { 
-  //    width: "35rem",
-  //    disableClose: true,
-  // });
-  // }
+ 
 }

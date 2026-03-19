@@ -25,6 +25,15 @@ export class FirestoreService {
     throw error;
   }
 }
+
+async getProjectsOnce(user: User): Promise<Project<Timestamp>[]> {
+  const q = query(
+    collection(this.fs, this.projectCol),
+    where('uid', '==', user.uid)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => d.data() as Project<Timestamp>);
+}
   // ...existing code...
   getNotificationsForUser(email: string) {
     const notifColRef = collection(this.fs, this.notificationCol);

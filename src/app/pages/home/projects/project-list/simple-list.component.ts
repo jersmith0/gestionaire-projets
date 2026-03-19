@@ -1,129 +1,337 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { Subscription, Observable } from 'rxjs';
+import { AsyncPipe, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { Timestamp } from '@angular/fire/firestore';
 import { Project } from '../../../../core/models/project.model';
 import { AuthService } from '../../../../core/service/firebase/auth.service';
 import { FirestoreService } from '../../../../core/service/firebase/firestore.service';
-import { Timestamp } from '@angular/fire/firestore';
-import { AsyncPipe, DatePipe } from '@angular/common';
-import { MatRippleModule } from '@angular/material/core';
-import { RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { ToolInfo, TOOLS } from '../../../../tools.constants';
 import { SetProjectComponent } from '../set-project/set-project.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-simple-list',
   standalone: true,
-  imports: [
-    CommonModule,
-    AsyncPipe,
-    MatRippleModule,
-    RouterLink,
-    MatIconModule,
-  ],
+  imports: [AsyncPipe, DatePipe, RouterLink],
   template: `
-    <main class="p-6 min-h-[calc(100vh-64px)] ">
-      @let user = user$ | async;
-      @let projects = projects$ | async;
+    @let user = user$ | async;
+    @let projects = projects$ | async;
+    @let visible = showAll() ? projects : projects?.slice(0, 3);
 
-      <!-- État vide -->
+    <div class="simple-list-root">
+
+      <!-- ── Empty state ── -->
       @if (!projects?.length) {
-        <div class="flex flex-col items-center justify-center h-96 text-center text-slate-400">
-          <span class="material-icons text-8xl text-violet-500/50 mb-6 animate-pulse">folder_off</span>
-          <h3 class="text-2xl font-semibold text-slate-200 mb-3">
-            Aucun projet pour le moment
-          </h3>
-          <p class="text-slate-500 mb-8 max-w-md">
-            Commencez par créer votre premier projet pour organiser vos idées et collaborer efficacement.
-          </p>
-          <button 
-            routerLink="/new-project" 
-            class="px-8 py-4 bg-cyan text-white font-semibold rounded-xl hover:shadow-[0_0_25px_-5px] hover:shadow-violet-600/40 transition-all duration-300 transform hover:scale-105">
-            <span class="material-icons mr-2 align-middle">add_circle</span>
-            Créer un projet
-          </button>
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+              <rect width="36" height="36" rx="18" fill="#f0f4ff"/>
+              <path d="M10 26V14l8-6 8 6v12H10z" stroke="#1a56db" stroke-width="1.4" stroke-linejoin="round"/>
+              <path d="M15 26v-5h6v5" stroke="#1a56db" stroke-width="1.4" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p class="empty-title">Aucun projet pour l'instant</p>
+          <p class="empty-sub">Ajoutez des projets depuis votre tableau de bord.</p>
         </div>
       }
 
-      <!-- Grille de projets -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 md:mt-16 lg:mt-20">
-        @for (project of projects; track project.id) {
-          <div 
-            matRipple 
-            class="group relative glass rounded-2xl overflow-hidden border border-slate-800/50 hover:border-violet-600/50 hover:shadow-2xl hover:shadow-violet-900/20 transition-all duration-300 cursor-pointer"
-          >
-            <!-- Boutons Modifier / Supprimer (visibles uniquement au propriétaire) -->
-           <!-- Boutons Modifier / Supprimer -->
+      <!-- ── Project grid (3 by default) ── -->
+      @if (projects?.length) {
+        <div class="projects-grid">
+          @for (project of visible; track project.id) {
+            <article class="project-card" [class.project-card--own]="user?.uid === project.uid">
 
 
-            <!-- Badge propriétaire / contributeur -->
-            <!-- <div class="absolute top-4 left-4 z-10">
-              <span 
-                class="px-3 py-1 text-xs font-semibold rounded-full shadow-md"
-                [ngClass]="{
-                  'bg-gradient-to-r from-violet-600 to-cyan-600 text-white': project.uid === user?.uid,
-                  'bg-slate-700/80 text-slate-200': project.uid !== user?.uid
-                }"
-              >
-                {{ project.uid === user?.uid ? 'Propriétaire' : 'Contributeur' }}
-              </span>
-            </div> -->
-
-            <!-- Contenu -->
-            <div class="p-6">
-              <h3 class="text-xl font-bold text-white group-hover:text-violet-400 transition-colors line-clamp-2 mb-2">
-                {{ project.title }}
-              </h3>
-
-              <p class="text-slate-400 text-sm line-clamp-3 mb-6">
-                {{ project.description || 'Aucune description' }}
-              </p>
-
-              <!-- Outils utilisés -->
-              @if (project.contributors?.length) {
-                <div class="mt-4">
-                  <h4 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                    Outils utilisés
-                  </h4>
-
-                  <div class="flex flex-wrap gap-2">
+              <!-- Body -->
+              <div class="card-body">
+                <div class="card-top">
+                  <h3 class="card-title">{{ project.title }}</h3>
+                  <p class="card-desc">{{ project.description || 'Aucune description fournie.' }}</p>
+                </div>
+                @if (project.contributors?.length) {
+                  <div class="card-tools">
                     @for (tool of project.contributors; track $index) {
-                      @let toolInfo = getToolInfo(tool);
-                      <span 
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-slate-800/70 border border-slate-700/50 text-slate-200 hover:bg-slate-700/70 hover:border-violet-600/50 transition-all duration-200 group">
-                        <span class="material-icons text-base" [ngClass]="toolInfo.color">
-                          {{ toolInfo.icon }}
-                        </span>
-                        {{ toolInfo.displayName || tool }}
+                      @let info = getToolInfo(tool);
+                      <span class="tool-badge">
+                        <span class="material-icons tool-icon">{{ info.icon }}</span>
+                        {{ info.displayName || tool }}
                       </span>
                     }
                   </div>
-                </div>
-              } @else {
-                <div class="mt-4 text-sm text-slate-500 italic flex items-center gap-2">
-                  <span class="material-icons text-base">build</span>
-                  Aucun outil spécifié
-                </div>
-              }
-
-              <!-- Date -->
-              <div class="mt-6 text-xs text-slate-600 flex items-center gap-2">
-                <!-- <span class="material-icons text-base">calendar_today</span>
-                <span>{{ formateDate(project.createdAt) | date:'dd MMM yyyy' }}</span> -->
+                } @else {
+                  <p class="no-tools">Aucun outil spécifié</p>
+                }
               </div>
-            </div>
+
+              <!-- Footer -->
+              <div class="card-footer">
+                <span class="ownership-badge" [class.ownership-badge--own]="user?.uid === project.uid">
+                  {{ user?.uid === project.uid ? 'Mon projet' : 'Contributeur' }}
+                </span>
+                @if (project.createdAt) {
+                  <span class="card-date">{{ formateDate(project.createdAt) | date:'dd MMM yyyy' }}</span>
+                }
+              </div>
+
+            </article>
+          }
+        </div>
+
+        <!-- ── Expand / collapse panel ── -->
+        @if ((projects?.length || 0) > 3) {
+          <div class="expand-section">
+            <button class="btn-expand" (click)="toggleAll()">
+              @if (!showAll()) {
+                <span>Voir tous les projets</span>
+                <span class="expand-count">+{{ (projects?.length || 0) - 3 }} autres</span>
+                <svg class="expand-chevron" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              } @else {
+                <span>Réduire</span>
+                <svg class="expand-chevron expand-chevron--up" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 9l4-4 4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              }
+            </button>
           </div>
         }
-      </div>
-    </main>
+      }
+
+    </div>
   `,
   styles: [`
-    .glass {
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(12px);
+    :host {
+      --c-bg:        #f8f9fc;
+      --c-surface:   #ffffff;
+      --c-border:    #e5e7ef;
+      --c-text:      #111827;
+      --c-text-muted:#6b7280;
+      --c-primary:   #1a56db;
+      --c-primary-dk:#1447c0;
+      --c-mark:      #f0f4ff;
+      --c-error:     #dc2626;
+      --c-error-bg:  #fef2f2;
+      --r-md:  10px;
+      --r-lg:  16px;
+      --r-xl:  20px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+      --font-display: 'Georgia', 'Times New Roman', serif;
+      --font-body: 'system-ui', -apple-system, 'Segoe UI', sans-serif;
+      display: block;
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--c-text);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    a { text-decoration: none; color: inherit; }
+
+    .simple-list-root {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── Empty ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 48px 24px;
+      gap: 10px;
+    }
+    .empty-icon { margin-bottom: 4px; }
+    .empty-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--c-text);
+    }
+    .empty-sub {
+      font-size: .83rem;
+      color: var(--c-text-muted);
+    }
+
+    /* ── Grid ── */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    /* ── Card ── */
+    .project-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s, box-shadow .2s, transform .2s;
+    }
+    .project-card:hover {
+      border-color: var(--c-primary);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .project-card--own::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--c-primary);
+      border-radius: var(--r-xl) var(--r-xl) 0 0;
+    }
+
+    /* Actions */
+    .card-actions {
+      position: absolute;
+      top: 12px; right: 12px;
+      display: flex;
+      gap: 5px;
+      opacity: 0;
+      transition: opacity .2s;
+      z-index: 10;
+    }
+    .project-card:hover .card-actions { opacity: 1; }
+    .action-btn {
+      width: 28px; height: 28px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--c-border);
+      background: var(--c-surface);
+      color: var(--c-text-muted);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .action-btn:hover { border-color: var(--c-primary); color: var(--c-primary); background: var(--c-mark); }
+    .action-btn--danger:hover { border-color: var(--c-error); color: var(--c-error); background: var(--c-error-bg); }
+
+    /* Body */
+    .card-body {
+      padding: 20px 20px 14px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card-top { display: flex; flex-direction: column; gap: 6px; }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--c-text);
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      padding-right: 44px;
+    }
+    .card-desc {
+      font-size: .8rem;
+      color: var(--c-text-muted);
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tools { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tool-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 9px;
+      background: var(--c-mark);
+      border: 1px solid rgba(26,86,219,.12);
+      border-radius: 100px;
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--c-primary);
+    }
+    .tool-icon { font-size: .8rem; line-height: 1; }
+    .no-tools { font-size: .76rem; color: var(--c-text-muted); font-style: italic; }
+
+    /* Footer */
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-top: 1px solid var(--c-border);
+      background: var(--c-bg);
+    }
+    .ownership-badge {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--c-text-muted);
+      padding: 2px 7px;
+      border-radius: 100px;
+      background: var(--c-border);
+    }
+    .ownership-badge--own {
+      background: var(--c-mark);
+      color: var(--c-primary);
+      border: 1px solid rgba(26,86,219,.15);
+    }
+    .card-date { font-size: .72rem; color: var(--c-text-muted); }
+
+    /* ── Expand section ── */
+    .expand-section {
+      display: flex;
+      justify-content: center;
+      padding: 20px 0 4px;
+    }
+    .btn-expand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      border: 1.5px solid var(--c-border);
+      border-radius: 100px;
+      background: var(--c-surface);
+      font-size: .83rem;
+      font-weight: 600;
+      color: var(--c-text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color .2s, color .2s, background .2s, box-shadow .2s;
+    }
+    .btn-expand:hover {
+      border-color: var(--c-primary);
+      color: var(--c-primary);
+      background: var(--c-mark);
+      box-shadow: 0 2px 10px rgba(26,86,219,.1);
+    }
+    .expand-count {
+      font-size: .72rem;
+      font-weight: 700;
+      background: var(--c-mark);
+      color: var(--c-primary);
+      border: 1px solid rgba(26,86,219,.15);
+      padding: 1px 7px;
+      border-radius: 100px;
+    }
+    .expand-chevron {
+      color: currentColor;
+      transition: transform .25s cubic-bezier(.22,1,.36,1);
+      flex-shrink: 0;
+    }
+    .expand-chevron--up { transform: rotate(180deg); }
+
+    @media (max-width: 600px) {
+      .projects-grid { grid-template-columns: 1fr; }
+      .card-actions { opacity: 1; }
     }
   `]
 })
@@ -131,11 +339,11 @@ export class SimpleListComponent implements OnInit, OnDestroy {
   private fs = inject(FirestoreService);
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
-  private snackBar = inject(MatSnackBar);
 
   user$ = this.auth.user;
   projects$?: Observable<Project<Timestamp>[]>;
   userSub?: Subscription;
+  showAll = signal(false);
 
   formateDate = (t?: Timestamp) => this.fs.formatedTimestamp(t);
 
@@ -147,34 +355,33 @@ export class SimpleListComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
+  ngOnDestroy() {
     this.userSub?.unsubscribe();
   }
 
-  getToolInfo (toolName: string): ToolInfo {
-    const lowerName = toolName.toLowerCase().trim();
-    return (
-      TOOLS.find(t => lowerName.includes(t.name)) || {
-        name: lowerName,
-        displayName: toolName,
-        icon: 'build',
-        color: 'text-violet-400',
-      }
-    );
+  toggleAll() {
+    this.showAll.update(v => !v);
+  }
+
+  getToolInfo(toolName: string): ToolInfo {
+    const lower = toolName.toLowerCase().trim();
+    return TOOLS.find(t => lower.includes(t.name)) ?? {
+      name: lower,
+      displayName: toolName,
+      icon: 'build',
+      color: 'text-primary',
+    };
   }
 
   onEditProject(project: Project<Timestamp>) {
-    this.dialog.open(SetProjectComponent, { 
-      width: "35rem",
+    this.dialog.open(SetProjectComponent, {
+      width: '35rem',
       disableClose: true,
-      data: project
-   });
- }
- 
- onDeleteProject(projectId: string) {
-    this.fs.deleteData(this.fs.projectCol, projectId);
-    const message = 'Projet suprimé avec succès';
-    this.snackBar.open(message, '', { duration: 5000 });
+      data: project,
+    });
   }
 
+  onDeleteProject(projectId: string) {
+    this.fs.deleteData(this.fs.projectCol, projectId);
+  }
 }

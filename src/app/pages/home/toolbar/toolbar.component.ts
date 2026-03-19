@@ -1,12 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatIconModule } from '@angular/material/icon';
-
 import { APP_NAME, IS_MEDIUM } from '../../../app.constants';
 import { WindowsObserverService } from '../../../core/service/utilities/windows-observer.service';
 import { ThemeMode, ThemeService } from '../../../core/service/utilities/theme.service';
@@ -14,163 +9,349 @@ import { StateService } from '../../../core/service/utilities/state.service';
 import { AuthService } from '../../../core/service/firebase/auth.service';
 import { FirestoreService } from '../../../core/service/firebase/firestore.service';
 import { SetProjectComponent } from '../projects/set-project/set-project.component';
-import { MatDividerModule } from "@angular/material/divider";
 
 @Component({
   selector: 'app-toolbar',
   standalone: true,
-  imports: [CommonModule, AsyncPipe, MatMenuModule, MatIconModule, MatDividerModule],
+  imports: [AsyncPipe],
   template: `
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
-      <div class="h-16 px-4 md:px-6 flex items-center justify-between">
-        <!-- Gauche : Burger + Logo -->
-        <div class="flex items-center gap-4">
-          @if (viewport() <= medium) {
-            <button 
-              (click)="toggleDrawer()"
-              class="p-2 -ml-2 rounded-full hover:bg-slate-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-            >
-              <span class="material-icons text-slate-300 text-2xl">menu</span>
+    <nav class="toolbar">
+      <div class="toolbar-inner">
+
+        <!-- Left: burger + logo -->
+        <div class="toolbar-left">
+          @if (isMobile()) {
+            <button class="icon-btn" (click)="toggleDrawer()" title="Menu">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
             </button>
           }
-
-        <div class="flex justify-center items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-xl bg-violet-600  flex items-center justify-center text-white font-bold text-2xl">
-            P
-          </div>
-          <h1 class="text-3xl font-extrabold b bg-clip-text text-white">
-            {{ appName }}
-          </h1>
-        </div>
+          <a class="toolbar-logo" [href]="'/'">
+            <span class="logo-mark">P</span>
+            <span class="logo-name">{{ appName }}</span>
+          </a>
         </div>
 
-        <!-- Droite : Nouveau projet + Notifications + Avatar -->
-        <div class="flex items-center gap-3 md:gap-6">
-          <!-- Nouveau projet -->
-          <button 
-            (click)="onNewProject()"
-            class="hidden sm:flex items-center gap-2 px-5 py-2 bg-violet-600 text-white font-medium rounded-lg" style="cursor: pointer;"
-          >
-            <span class="material-icons text-lg">add_circle</span>
-            Nouveau projet
+        <!-- Right: actions + avatar -->
+        <div class="toolbar-right">
+          <!-- New project -->
+          <button class="btn btn-primary" (click)="onNewProject()">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span class="btn-label">Nouveau projet</span>
           </button>
 
-          <!-- Version mobile : icône seule -->
-          <button 
-            (click)="onNewProject()"
-            class="sm:hidden p-2 rounded-full hover:bg-slate-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-          >
-            <span class="material-icons text-slate-300 text-2xl">add_circle</span>
-          </button>
-
-          <!-- Notifications -->
-          <!-- <button 
-            class="relative p-2 rounded-full hover:bg-slate-800/50 transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-            [matMenuTriggerFor]="notifMenu"
-          >
-            <span class="material-icons text-slate-300 text-2xl group-hover:text-violet-400 transition-colors">
-              notifications
-            </span>
-            @if (unreadCount > 0) {
-              <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-sm">
-                {{ unreadCount }}
-              </span>
-            }
-          </button> -->
-
-          <mat-menu #notifMenu="matMenu" xPosition="before">
-            <div class="w-80 max-h-96 overflow-y-auto bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-xl shadow-2xl">
-              @if (notifications.length > 0) {
-                @for (notif of notifications; track notif.id) {
-                  <div 
-                    class="flex items-center px-4 py-3 border-b border-slate-800/50 hover:bg-slate-800/50 transition-colors cursor-pointer"
-                    (click)="markAsRead(notif)"
-                  >
-                    <span class="material-icons mr-3" [class.text-violet-400]="!notif.read" [class.text-slate-500]="notif.read">
-                      notification_important
-                    </span>
-                    <div class="flex-1">
-                      <p class="text-slate-200 text-sm" [class.opacity-60]="notif.read">
-                        {{ notif.message }}
-                      </p>
-                      @if (notif.read) {
-                        <span class="text-xs text-slate-500">(lu)</span>
-                      }
-                    </div>
-                    <button 
-                      mat-icon-button 
-                      (click)="deleteNotification(notif); $event.stopPropagation()"
-                      class="text-slate-400 hover:text-red-400"
-                    >
-                      <span class="material-icons text-lg">delete</span>
-                    </button>
-                  </div>
-                }
-              } @else {
-                <div class="p-6 text-center text-slate-500">
-                  Aucune notification
-                </div>
-              }
-            </div>
-          </mat-menu>
-
-          <!-- Avatar -->
-          <div 
-            class="relative cursor-pointer group focus:outline-none focus:ring-2 focus:ring-violet-500/40 rounded-full"
-            [matMenuTriggerFor]="profileMenu"
-          >
-            <img 
-              [src]="(user$ | async)?.photoURL"
+          <!-- Avatar + dropdown -->
+          <div class="avatar-wrap" (click)="toggleProfile()" [class.avatar-wrap--open]="profileOpen()">
+            <img
+              [src]="(user$ | async)?.photoURL || 'assets/default-avatar.png'"
               alt="Profil"
-              class="w-9 h-9 md:w-10 md:h-10 rounded-full object-cover border-2 border-slate-700 group-hover:border-violet-500 transition-all duration-300 shadow-md"
-            >
+              class="avatar-img"
+            />
+            <svg class="avatar-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
 
-          <mat-menu #profileMenu="matMenu">
-            <div class="bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-xl shadow-2xl w-64 overflow-hidden">
-              <div class="p-4 border-b border-slate-800/50">
-                <p class="text-slate-200 font-medium truncate">
-                  {{ (user$ | async)?.displayName || 'Utilisateur' }}
-                </p>
-                <p class="text-sm text-slate-400 truncate">
-                  {{ (user$ | async)?.email }}
-                </p>
+          <!-- Profile dropdown -->
+          @if (profileOpen()) {
+            <div class="dropdown" (click)="$event.stopPropagation()">
+              <!-- User info -->
+              <div class="dropdown-user">
+                <img
+                  [src]="(user$ | async)?.photoURL || 'assets/default-avatar.png'"
+                  alt=""
+                  class="dropdown-avatar"
+                />
+                <div class="dropdown-user-info">
+                  <strong>{{ (user$ | async)?.displayName || 'Utilisateur' }}</strong>
+                  <span>{{ (user$ | async)?.email }}</span>
+                </div>
               </div>
 
-              <button mat-menu-item (click)="switchTheme('device-theme')">
-                <span class="material-icons mr-3 text-violet-400">brightness_6</span>
-                <span>Appareil</span>
+              <div class="dropdown-divider"></div>
+
+              <!-- Theme -->
+              <p class="dropdown-section-label">Apparence</p>
+              <button class="dropdown-item" (click)="switchTheme('device-theme')">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M7 1v12" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M7 13A6 6 0 017 1v12z" fill="currentColor" opacity=".2"/>
+                </svg>
+                Automatique
               </button>
-              <button mat-menu-item (click)="switchTheme('light-theme')">
-                <span class="material-icons mr-3 text-violet-400">wb_sunny</span>
-                <span>Clair</span>
+              <button class="dropdown-item" (click)="switchTheme('light-theme')">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="3" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.93 2.93l1.06 1.06M10.01 10.01l1.06 1.06M2.93 11.07l1.06-1.06M10.01 3.99l1.06-1.06" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+                Clair
               </button>
-              <button mat-menu-item (click)="switchTheme('dark-theme')">
-                <span class="material-icons mr-3 text-violet-400">bedtime</span>
-                <span>Sombre</span>
+              <button class="dropdown-item" (click)="switchTheme('dark-theme')">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M12 8.5A5.5 5.5 0 015.5 2a5.5 5.5 0 100 10A5.5 5.5 0 0012 8.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                </svg>
+                Sombre
               </button>
 
-              <mat-divider class="border-slate-700" />
+              <div class="dropdown-divider"></div>
 
-              <button 
-                mat-menu-item 
-                (click)="logOut()"
-                class="flex items-center gap-3 px-4 py-3 hover:bg-red-900/30 text-red-300"
-              >
-                <span class="material-icons">logout</span>
-                <span>Déconnexion</span>
+              <button class="dropdown-item dropdown-item--danger" (click)="logOut()">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M9 10l3-3-3-3M12 7H5M5 2H2.5A1.5 1.5 0 001 3.5v7A1.5 1.5 0 002.5 12H5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Déconnexion
               </button>
             </div>
-          </mat-menu>
+
+            <!-- Backdrop to close -->
+            <div class="dropdown-backdrop" (click)="profileOpen.set(false)"></div>
+          }
         </div>
+
       </div>
     </nav>
   `,
   styles: [`
-    .glass {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px);
+    :host {
+      --c-bg:        #f8f9fc;
+      --c-surface:   #ffffff;
+      --c-border:    #e5e7ef;
+      --c-text:      #111827;
+      --c-text-muted:#6b7280;
+      --c-primary:   #1a56db;
+      --c-primary-dk:#1447c0;
+      --c-mark:      #f0f4ff;
+      --c-error:     #dc2626;
+      --c-error-bg:  #fef2f2;
+      --font-body: 'system-ui', -apple-system, 'Segoe UI', sans-serif;
+      display: block;
+      font-family: var(--font-body);
     }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      height: 64px;
+      background: var(--c-surface);
+      border-bottom: 1px solid var(--c-border);
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .toolbar-inner {
+      height: 100%;
+      max-width: 100%;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    /* ── Left ── */
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .toolbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .logo-mark {
+      width: 32px; height: 32px;
+      border-radius: 7px;
+      background: var(--c-primary);
+      color: #fff;
+      font-weight: 800;
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--c-text);
+    }
+
+    /* ── Right ── */
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    /* ── Buttons ── */
+    .icon-btn {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--c-border);
+      background: transparent;
+      color: var(--c-text-muted);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .icon-btn:hover {
+      background: var(--c-bg);
+      color: var(--c-text);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--c-primary);
+      color: #fff;
+      border-color: var(--c-primary);
+    }
+    .btn-primary:hover {
+      background: var(--c-primary-dk);
+      border-color: var(--c-primary-dk);
+      box-shadow: 0 4px 14px rgba(26,86,219,.25);
+    }
+    .btn-label {
+      display: none;
+    }
+    @media (min-width: 560px) {
+      .btn-label { display: inline; }
+    }
+
+    /* ── Avatar ── */
+    .avatar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px 3px 3px;
+      border: 1.5px solid var(--c-border);
+      border-radius: 100px;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    .avatar-wrap:hover,
+    .avatar-wrap--open { border-color: var(--c-primary); }
+    .avatar-img {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
+    .avatar-chevron {
+      color: var(--c-text-muted);
+      transition: transform .2s;
+    }
+    .avatar-wrap--open .avatar-chevron { transform: rotate(180deg); }
+
+    /* ── Dropdown ── */
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      width: 240px;
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.1), 0 2px 8px rgba(0,0,0,.06);
+      z-index: 200;
+      overflow: hidden;
+      animation: dropIn .15s cubic-bezier(.22,1,.36,1) forwards;
+    }
+    @keyframes dropIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .dropdown-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 199;
+    }
+
+    .dropdown-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+    }
+    .dropdown-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .dropdown-user-info strong {
+      display: block;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--c-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+    .dropdown-user-info span {
+      font-size: .75rem;
+      color: var(--c-text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+      display: block;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: var(--c-border);
+      margin: 4px 0;
+    }
+    .dropdown-section-label {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--c-text-muted);
+      padding: 8px 16px 4px;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 16px;
+      font-size: .85rem;
+      font-weight: 500;
+      color: var(--c-text);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      transition: background .15s;
+    }
+    .dropdown-item:hover { background: var(--c-bg); }
+    .dropdown-item svg { color: var(--c-text-muted); flex-shrink: 0; }
+    .dropdown-item--danger {
+      color: var(--c-error);
+    }
+    .dropdown-item--danger:hover { background: var(--c-error-bg); }
+    .dropdown-item--danger svg { color: var(--c-error); }
   `]
 })
 export class ToolbarComponent {
@@ -181,32 +362,18 @@ export class ToolbarComponent {
   state = inject(StateService);
   auth = inject(AuthService);
   fs = inject(FirestoreService);
-  snackBar = inject(MatSnackBar);
   dialog = inject(MatDialog);
   router = inject(Router);
 
   user$ = this.auth.user;
-  unreadCount = 0;
-  notifications: any[] = [];
+  profileOpen = signal(false);
+  isMobile = computed(() => this.viewport() < this.medium);
 
-  // ngOnInit() {
-  //   this.user$.subscribe(user => {
-  //     if (user?.email) {
-  //       const email = user.email.trim().toLowerCase();
-  //       this.fs.getNotificationsForUser(email).subscribe(notifs => {
-  //         this.notifications = notifs;
-  //         this.unreadCount = notifs.filter(n => !n.read).length;
-
-  //         notifs.filter(n => !n.read).forEach(n => {
-  //           this.snackBar.open(n.message, 'OK', { duration: 6000 });
-  //         });
-  //       });
-  //     }
-  //   });
-  // }
+  toggleProfile() { this.profileOpen.update(v => !v); }
 
   switchTheme(theme: ThemeMode) {
     this.themeService.setTheme(theme);
+    this.profileOpen.set(false);
   }
 
   toggleDrawer() {
@@ -214,22 +381,9 @@ export class ToolbarComponent {
   }
 
   async logOut() {
+    this.profileOpen.set(false);
     await this.auth.logout();
     this.router.navigate(['/login']);
-  }
-
-  markAsRead(notif: any) {
-    if (!notif.read) {
-      this.fs.setNotification({ ...notif, read: true });
-    }
-  }
-
-  deleteNotification(notif: any) {
-    if (notif?.id) {
-      this.fs.deleteData('notifications', notif.id).then(() => {
-        this.notifications = this.notifications.filter(n => n.id !== notif.id);
-      });
-    }
   }
 
   onNewProject() {
@@ -238,8 +392,7 @@ export class ToolbarComponent {
       maxWidth: '600px',
       maxHeight: '90vh',
       disableClose: true,
-      panelClass: ['glass-dialog', 'bg-slate-950/90', 'backdrop-blur-lg', 'border', 'border-slate-700/50', 'rounded-2xl', 'shadow-2xl'],
-      autoFocus: false
+      autoFocus: false,
     });
   }
 }
