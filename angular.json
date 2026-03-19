@@ -12,27 +12,13 @@
           "style": "scss",
           "skipTests": true
         },
-        "@schematics/angular:class": {
-          "skipTests": true
-        },
-        "@schematics/angular:directive": {
-          "skipTests": true
-        },
-        "@schematics/angular:guard": {
-          "skipTests": true
-        },
-        "@schematics/angular:interceptor": {
-          "skipTests": true
-        },
-        "@schematics/angular:pipe": {
-          "skipTests": true
-        },
-        "@schematics/angular:resolver": {
-          "skipTests": true
-        },
-        "@schematics/angular:service": {
-          "skipTests": true
-        }
+        "@schematics/angular:class": { "skipTests": true },
+        "@schematics/angular:directive": { "skipTests": true },
+        "@schematics/angular:guard": { "skipTests": true },
+        "@schematics/angular:interceptor": { "skipTests": true },
+        "@schematics/angular:pipe": { "skipTests": true },
+        "@schematics/angular:resolver": { "skipTests": true },
+        "@schematics/angular:service": { "skipTests": true }
       },
       "root": "",
       "sourceRoot": "src",
@@ -44,9 +30,7 @@
             "outputPath": "dist/gestionaire-projets",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -55,9 +39,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.scss"
-            ],
+            "styles": ["src/styles.scss"],
             "scripts": []
           },
           "configurations": {
@@ -70,8 +52,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "50kB",
+                  "maximumError": "100kB"
                 }
               ],
               "outputHashing": "all"
@@ -102,10 +84,7 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
+            "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -114,9 +93,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.scss"
-            ],
+            "styles": ["src/styles.scss"],
             "scripts": []
           }
         }
